@@ -24,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+          package-manager-cache: false
       - run: node scripts/live.ts --out "$RUNNER_TEMP/status/status.json"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
