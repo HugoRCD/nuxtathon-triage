@@ -297,23 +297,18 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
             Issues created before 9 October. Repositories you maintain don’t count.
           </p>
         </section>
-        <section class="mt-auto space-y-3 rounded-lg border border-default bg-elevated/40 p-3">
-          <div class="flex gap-1.5">
+        <section class="mt-auto space-y-2.5 rounded-lg border border-default bg-elevated/40 p-2.5">
+          <div class="flex gap-1">
             <AgentLogo
               v-for="item in agentClients.filter((c) => c.logo)"
               :key="item.id"
               :src="item.logo"
-              size="sm"
+              size="xs"
             />
           </div>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-highlighted">Use It From Your Agent</p>
-            <p class="text-sm text-muted leading-6">
-              Let Claude Code, Cursor, VS Code or Codex search these issues for you.
-            </p>
-          </div>
+          <p class="text-sm font-medium text-highlighted">Use It From Your Agent</p>
           <AgentSetup>
-            <UButton label="Connect Your Agent" color="neutral" variant="outline" block>
+            <UButton label="Connect Your Agent" color="neutral" variant="outline" size="sm" block>
               <template #leading><McpIcon class="size-4" /></template>
             </UButton>
           </AgentSetup>

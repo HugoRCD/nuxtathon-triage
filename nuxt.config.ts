@@ -1,5 +1,9 @@
 import { fileURLToPath } from 'node:url'
 
+const SITE = 'https://nuxtathon-triage.vercel.app'
+const DESCRIPTION =
+  'Open issues across nuxt and nuxt-modules, sorted by how easy they are to close. Also available to coding agents over MCP.'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-10',
   modules: ['@nuxt/ui', '@comark/nuxt', '@nuxtjs/mcp-toolkit'],
@@ -10,13 +14,28 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'en-GB' },
-      title: 'Nuxtathon · Issue explorer',
+      title: 'Nuxtathon · Issue Explorer',
+      link: [
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
       meta: [
-        {
-          name: 'description',
-          content:
-            'Find your next contribution to the Nuxt ecosystem. Evidence-led issue triage, classified with Jev.',
-        },
+        { name: 'description', content: DESCRIPTION },
+        { name: 'theme-color', content: '#00DC82' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'Nuxtathon' },
+        { property: 'og:title', content: 'Nuxtathon · Issue Explorer' },
+        { property: 'og:description', content: DESCRIPTION },
+        { property: 'og:url', content: SITE },
+        { property: 'og:image', content: `${SITE}/og.png` },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: 'Nuxtathon Issue Explorer' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Nuxtathon · Issue Explorer' },
+        { name: 'twitter:description', content: DESCRIPTION },
+        { name: 'twitter:image', content: `${SITE}/og.png` },
       ],
     },
   },
