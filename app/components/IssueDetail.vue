@@ -124,14 +124,7 @@ const tail = computed(() => (folded.value ? props.issue.comments.slice(-KEEP_END
         : 'space-y-5'
     "
   >
-    <aside
-      aria-label="Summary"
-      :class="[
-        '@container space-y-5',
-        split &&
-          'lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pb-4',
-      ]"
-    >
+    <aside aria-label="Summary" :class="['@container space-y-5', split && 'lg:col-start-2 lg:row-start-1']">
       <div class="flex flex-col-reverse gap-3 @md:flex-row @md:items-start @md:justify-between">
         <div class="min-w-0 space-y-2">
           <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted">

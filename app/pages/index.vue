@@ -52,7 +52,7 @@ const detailOpen = computed({
     }
   },
 })
-function openIssue(i: PublicIssue) {
+function preview(i: PublicIssue) {
   router.replace({ query: { ...route.query, issue: i.id } })
 }
 const page = ref(1)
@@ -63,6 +63,36 @@ const perPage = 50
 const pageRows = computed(() => rows.value.slice((page.value - 1) * perPage, page.value * perPage))
 const main = useTemplateRef<HTMLElement>('main')
 watch(page, () => main.value?.scrollTo({ top: 0 }))
+
+/** Coming back from an issue page lands on the same page of results, scrolled to the same row. */
+const memory = useState<{ query: string; page: number; top: number } | null>('list-memory', () => null)
+const queryKey = () => JSON.stringify({ ...route.query, issue: undefined })
+onBeforeRouteLeave(() => {
+  memory.value = { query: queryKey(), page: page.value, top: main.value?.scrollTop ?? 0 }
+})
+const saved = memory.value?.query === queryKey() ? memory.value : null
+memory.value = null
+if (saved) {
+  let restored = false
+  watch(
+    rows,
+    (r) => {
+      if (restored || !r.length) return
+      restored = true
+      page.value = saved.page
+      // Rows render over a few frames; retry until the list is tall enough to land on the saved row.
+      let tries = 0
+      const restore = () => {
+        const el = main.value
+        if (!el) return
+        el.scrollTo({ top: saved.top })
+        if (el.scrollTop < saved.top - 1 && ++tries < 30) requestAnimationFrame(restore)
+      }
+      requestAnimationFrame(restore)
+    },
+    { immediate: true, flush: 'post' },
+  )
+}
 const date = (s: string | null | undefined) =>
   s
     ? new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
@@ -543,10 +573,10 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
             </div>
             <div class="rounded-lg border border-default overflow-hidden">
               <div
-                class="hidden md:grid grid-cols-[minmax(0,1fr)_11rem_4rem_4rem] gap-4 px-4 py-2.5 bg-muted/40 border-b border-default text-xs font-medium text-muted"
+                class="hidden md:grid grid-cols-[minmax(0,1fr)_11rem_4rem_4rem_2rem] gap-4 px-4 py-2.5 bg-muted/40 border-b border-default text-xs font-medium text-muted"
               >
                 <span>Issue</span><span>What to Do</span><span class="text-right">Points</span
-                ><span class="text-right">Age</span>
+                ><span class="text-right">Age</span><span class="sr-only">Preview</span>
               </div>
               <div v-if="status === 'pending' || status === 'idle'" class="divide-y divide-default">
                 <div v-for="n in 8" :key="n" class="px-4 py-4 space-y-2">
@@ -557,7 +587,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                 <article
                   v-for="issue in pageRows"
                   :key="issue.id"
-                  class="relative grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_11rem_4rem_4rem] gap-x-4 gap-y-2 px-4 py-3.5 items-center transition-colors hover:bg-elevated/50"
+                  class="relative grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_11rem_4rem_4rem_2rem] gap-x-4 gap-y-2 px-4 py-3.5 items-center transition-colors hover:bg-elevated/50"
                   :class="route.query.issue === issue.id && 'bg-elevated/60'"
                 >
                   <div class="min-w-0 space-y-1.5">
@@ -580,13 +610,12 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                         ><UIcon name="i-lucide-git-pull-request" class="size-3.5" />Open PR</span
                       >
                     </div>
-                    <button
-                      type="button"
-                      class="block text-left text-[15px] leading-6 font-medium text-highlighted line-clamp-2 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary focus-visible:after:-outline-offset-2"
-                      @click="openIssue(issue)"
+                    <NuxtLink
+                      :to="issuePath(issue)"
+                      class="block text-[15px] leading-6 font-medium text-highlighted line-clamp-2 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary focus-visible:after:-outline-offset-2"
                     >
                       {{ issue.title }}
-                    </button>
+                    </NuxtLink>
                     <p
                       v-if="summary(issue)"
                       class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-toned"
@@ -646,6 +675,16 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                   >
                     {{ age(issue.ageDays) }}
                   </div>
+                  <UButton
+                    icon="i-lucide-panel-right-open"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="`Preview #${issue.number}`"
+                    title="Preview"
+                    class="relative z-10 hidden md:inline-flex justify-self-end text-dimmed hover:text-highlighted"
+                    @click="preview(issue)"
+                  />
                 </article>
               </div>
               <div v-else class="py-16 px-6 text-center space-y-3">

@@ -53,12 +53,18 @@ test(
       await page.waitForURL(/q=discussions/)
       assert.equal(await page.locator('article').count(), 1)
       await page.reload()
-      await page.getByRole('button', { name: 'Recognize Github discussions activity', exact: true }).waitFor()
+      await page.getByRole('link', { name: 'Recognize Github discussions activity', exact: true }).waitFor()
       assert.equal(
         await page.getByRole('textbox', { name: 'Search Issues' }).inputValue(),
         'discussions activity',
       )
-      await page.getByRole('button', { name: 'Recognize Github discussions activity', exact: true }).click()
+      assert.equal(
+        await page
+          .getByRole('link', { name: 'Recognize Github discussions activity', exact: true })
+          .getAttribute('href'),
+        '/nuxt/nuxters/issues/9',
+      )
+      await page.getByRole('button', { name: 'Preview #9', exact: true }).click()
       await page.getByRole('dialog').waitFor()
       assert.match(await page.getByRole('dialog').innerText(), /Thread/)
       assert.equal(

@@ -24,6 +24,13 @@ useSeoMeta({
   ogUrl: () => (issue.value ? `${SITE}${issuePath(issue.value)}` : undefined),
 })
 
+/** Return to the list the visitor came from, filters included. */
+const listTo = ref('/')
+onMounted(() => {
+  const back = useRouter().options.history.state.back
+  if (typeof back === 'string' && back.split('?')[0] === '/') listTo.value = back
+})
+
 const copied = ref(false)
 async function share() {
   try {
@@ -66,7 +73,7 @@ async function share() {
 
     <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <div class="mb-3 flex items-center justify-between gap-3">
-        <UButton to="/" color="neutral" variant="link" icon="i-lucide-arrow-left" class="-ml-2.5"
+        <UButton :to="listTo" color="neutral" variant="link" icon="i-lucide-arrow-left" class="-ml-2.5"
           >All Issues</UButton
         >
         <UButton
