@@ -183,6 +183,7 @@ A public, unauthenticated, read-only MCP endpoint (`/mcp`, `@nuxtjs/mcp-toolkit`
 
 - Theme: light by default; the header menu offers System, Light and Dark. Light mode uses green-700 for primary text to keep AA contrast; dark mode keeps #00DC82.
 - Full-height workspace with a compact 56px header. A 256px sidebar holds the views with counts and the Nuxtathon points rules. The toolbar sticks to the top: search, repository, filters, sort and removable active-filter chips.
+- Favicon and Apple touch icon use the official Nuxt mark. The Open Graph image (`public/og.png`, 1200×630) is a static file rendered once in the app fonts; nothing is generated at runtime.
 - Rows show repository, number, comments, thumbs-up and an open PR, then the title, then one plain line: time needed · who can act, plus "Jev is unsure" when relevant. Columns: What to Do, Points, Age. 50 per page. Sort sits beside the result count.
 - Plain language lives in `shared/plain.ts`. Jev returns choices and probabilities only; all wording is ours. A choice is stated only when Jev leans that way (p ≥ 0.6). Sureness is the weakest of time, who and next step: Confident ≥ 0.8, Fairly Sure ≥ 0.6, otherwise Unsure.
 - Views: All Issues, Quick Wins (anyone can act, under a few hours, no open PR), Good First Issues, Maybe Already Fixed, Questions to Answer, Documentation. Sorts: Easiest First (default: anyone-can-act first, then time, Unsure sinks), Most Points, Recently Updated, Oldest First.
