@@ -64,13 +64,24 @@ async function share() {
       </div>
     </header>
 
-    <main class="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <UButton to="/" color="neutral" variant="link" icon="i-lucide-arrow-left" class="-ml-2.5 mb-4"
-        >All Issues</UButton
-      >
+    <main class="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <UButton to="/" color="neutral" variant="link" icon="i-lucide-arrow-left" class="-ml-2.5"
+          >All Issues</UButton
+        >
+        <UButton
+          v-if="issue"
+          :icon="copied ? 'i-lucide-check' : 'i-lucide-link'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          @click="share"
+          >{{ copied ? 'Copied' : 'Copy Link' }}</UButton
+        >
+      </div>
 
       <template v-if="issue">
-        <div class="mb-8 space-y-2">
+        <div class="mb-5 space-y-1">
           <p class="text-sm text-muted">
             <a
               :href="`https://github.com/${issue.repo}`"
@@ -81,19 +92,9 @@ async function share() {
             >
             <span class="tabular-nums"> #{{ issue.number }}</span>
           </p>
-          <div class="flex items-start justify-between gap-4">
-            <h1 class="font-heading text-2xl sm:text-3xl leading-tight text-highlighted text-balance">
-              {{ issue.title }}
-            </h1>
-            <UButton
-              :icon="copied ? 'i-lucide-check' : 'i-lucide-link'"
-              color="neutral"
-              variant="outline"
-              class="shrink-0"
-              @click="share"
-              >{{ copied ? 'Copied' : 'Copy Link' }}</UButton
-            >
-          </div>
+          <h1 class="font-heading text-xl sm:text-2xl leading-tight text-highlighted text-balance">
+            {{ issue.title }}
+          </h1>
         </div>
         <IssueDetail :issue="issue" :live="entry" />
       </template>

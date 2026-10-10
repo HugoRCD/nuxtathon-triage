@@ -675,10 +675,10 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
       :title="selected?.title ?? 'Issue Details'"
       :description="selected ? `${selected.repo} #${selected.number}` : ''"
       :ui="{
-        content: 'sm:max-w-2xl',
-        header: 'px-6 py-5',
-        body: 'p-6',
-        title: 'font-heading text-xl leading-7 text-highlighted',
+        content: 'sm:max-w-3xl',
+        header: 'px-5 py-3.5 min-h-0',
+        body: 'p-5',
+        title: 'font-heading text-lg leading-6 text-highlighted',
         description: 'text-sm',
       }"
     >

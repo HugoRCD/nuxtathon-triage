@@ -89,6 +89,8 @@
 }
 .issue-markdown pre {
   font-size: 0.8125rem;
+  line-height: 1.25rem;
+  padding: 0.625rem 0.875rem;
   white-space: pre;
   max-height: 24rem;
 }

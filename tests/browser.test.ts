@@ -67,10 +67,11 @@ test(
       )
       const snapshot = await (await page.request.get(`${base}/data/index.json`)).json()
       const issue = snapshot.issues.find((i: { id: string }) => i.id === 'nuxt/nuxters#9')
-      assert.match(
-        await page.getByRole('dialog').innerText(),
-        issue?.status === 'assessed' ? /What to Do/ : /hasn’t assessed|outdated/,
-      )
+      if (issue?.status === 'assessed') {
+        assert.equal(await page.getByRole('dialog').getByRole('region', { name: 'What to Do' }).count(), 1)
+      } else {
+        assert.match(await page.getByRole('dialog').innerText(), /hasn’t assessed|outdated/)
+      }
       assert.match(page.url(), /issue=nuxt/)
       await page.getByRole('dialog').evaluate(async (el) => {
         await Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {})))
