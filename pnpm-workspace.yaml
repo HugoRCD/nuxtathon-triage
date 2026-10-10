@@ -1,3 +1,14 @@
 allowBuilds:
   esbuild: true
   vue-demi: true
+# Trusted releases published within pnpm's default 24h minimumReleaseAge.
+# Remove once they are older than a day.
+minimumReleaseAgeExclude:
+  - '@nuxt/cli@4.0.1'
+  - '@nuxt/kit@4.6.1'
+  - '@nuxt/nitro-server@4.6.1'
+  - '@nuxt/schema@4.6.1'
+  - '@nuxt/vite-builder@4.6.1'
+  - '@nuxt/vite-server@4.6.1'
+  - 'ai@7.0.137'
+  - 'nuxt@4.6.1'
