@@ -42,7 +42,7 @@ Keep validation proportional. Documentation-only changes do not justify dependen
 
 ## Verified project commands
 
-- `pnpm dev --port 3338`: local explorer.
+- `pnpm dev`: local explorer on port 3000.
 - `pnpm triage`: operator command help; collector stays read-only.
 - `pnpm test`: deterministic batch and pagination tests; browser test skips by default.
 - `pnpm test:browser`: browser integration test against the running local site.

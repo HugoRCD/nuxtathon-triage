@@ -16,7 +16,7 @@ const fallback = existsSync(root)
   : undefined
 const executablePath =
   process.env.TRIAGE_BROWSER_EXECUTABLE ?? (existsSync(chromium.executablePath()) ? undefined : fallback)
-const base = process.env.TRIAGE_TEST_URL ?? 'http://127.0.0.1:3338'
+const base = process.env.TRIAGE_TEST_URL ?? 'http://127.0.0.1:3000'
 
 test(
   'browser: real data, URL filters, evidence panel, empty view and mobile layout',
