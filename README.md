@@ -124,15 +124,25 @@ vercel deploy --prebuilt --prod --yes --scope hrcd
 
 All tools are annotated `readOnlyHint` and never write to GitHub. Results are a classified snapshot: agents are told to re-read the issue on GitHub before starting.
 
+The quickest setup is **Connect Your Agent** in the site header: one-click install for Cursor and VS Code, copyable commands for the rest, and a starter prompt. Or add it yourself:
+
 ```sh
 # Claude Code
 claude mcp add --transport http nuxtathon https://nuxtathon-triage.vercel.app/mcp
+
+# Codex
+codex mcp add nuxtathon --url https://nuxtathon-triage.vercel.app/mcp
 ```
 
-```json
+```jsonc
 // Cursor: .cursor/mcp.json
 { "mcpServers": { "nuxtathon": { "url": "https://nuxtathon-triage.vercel.app/mcp" } } }
+
+// VS Code: .vscode/mcp.json
+{ "servers": { "nuxtathon": { "type": "http", "url": "https://nuxtathon-triage.vercel.app/mcp" } } }
 ```
+
+Then ask something like: “Use the nuxtathon MCP server to find three easy Nuxt issues that count for Nuxtathon.”
 
 Classify in parallel within a hard spend cap. Budgets apply per run, so subtract earlier spend:
 

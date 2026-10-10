@@ -3,6 +3,7 @@ import type { Dataset, PublicIssue } from '#shared/types'
 import { defaultFilters, filterIssues, type Filters } from '#shared/filters'
 import { points, age } from '#shared/labels'
 import { summary, time, who, steps, types } from '#shared/plain'
+const { project } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
 const { data, status, error, refresh } = await useFetch<Dataset>('/data/index.json', { server: false })
@@ -217,7 +218,27 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
         <span v-if="data" class="hidden md:block text-sm text-muted mr-3 tabular-nums">
           {{ number(data.manifest.assessed) }} of {{ number(data.manifest.issues) }} classified
         </span>
+        <AgentSetup />
         <ThemeMenu />
+        <UButton
+          :to="project.repo"
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="i-lucide-github"
+          aria-label="Source on GitHub"
+          color="neutral"
+          variant="ghost"
+        />
+        <UButton
+          to="https://nuxtathon.live/"
+          target="_blank"
+          rel="noopener noreferrer"
+          icon="i-lucide-calendar"
+          aria-label="View Event"
+          color="neutral"
+          variant="ghost"
+          class="sm:hidden"
+        />
         <UButton
           to="https://nuxtathon.live/"
           target="_blank"
@@ -226,6 +247,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
           trailing-icon="i-lucide-arrow-up-right"
           color="neutral"
           variant="ghost"
+          class="hidden sm:inline-flex"
         />
       </div>
     </header>
@@ -271,7 +293,21 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
             Issues created before 9 October. Repositories you maintain don’t count.
           </p>
         </section>
-        <p class="mt-auto px-2 text-xs text-muted leading-5">
+        <section class="mt-auto space-y-2 border-t border-default pt-5 px-2">
+          <p class="text-sm font-medium text-highlighted">Open Source</p>
+          <p class="text-sm text-muted leading-6">
+            Spotted a bug or have an idea? Improvements to the app and agent tools are welcome.
+          </p>
+          <ULink
+            :to="project.repo"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+          >
+            <UIcon name="i-lucide-github" class="size-4" />Contribute on GitHub
+          </ULink>
+        </section>
+        <p class="px-2 text-xs text-muted leading-5">
           Suggestions come from Jev and need human verification. Updated
           {{ date(data?.manifest.generatedAt) }}.
         </p>

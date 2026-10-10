@@ -168,7 +168,7 @@ Nuxt + Nuxt UI for a read-only explorer (prerendered page, static `/data/index.j
 
 Issue bodies and comments render as GitHub-flavoured Markdown via Comark with a tag allowlist, attribute allowlist, http/https/mailto links only and no raw-HTML execution (`shared/markdown.ts`). Evidence excerpts stay plain text.
 
-A public, unauthenticated, read-only MCP endpoint (`/mcp`, `@nuxtjs/mcp-toolkit`) exposes `get_overview`, `search_issues` and `get_issue` over the bundled snapshot, reusing the explorer's filters and wording (`shared/agent.ts`). Tools are annotated read-only, cap output size, never call GitHub or a model, and tell agents the data is a snapshot to re-check on GitHub.
+A public, unauthenticated, read-only MCP endpoint (`/mcp`, `@nuxtjs/mcp-toolkit`) exposes `get_overview`, `search_issues` and `get_issue` over the bundled snapshot, reusing the explorer's filters and wording (`shared/agent.ts`). Tools are annotated read-only, cap output size, never call GitHub or a model, and tell agents the data is a snapshot to re-check on GitHub. The explorer’s **Connect Your Agent** dialog shows the server URL for the current origin, one-click Cursor and VS Code deeplinks, copyable Claude Code and Codex commands, a generic JSON config and a starter prompt. GitHub links (header, sidebar, and a prefilled “Report a wrong classification” issue per issue) point to the public repository.
 
 ## Implementation sequence
 

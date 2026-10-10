@@ -5,6 +5,15 @@ import { questionLabels, label, scoreLabels, skillKeys, points, age } from '#sha
 import { summary, why } from '#shared/plain'
 const props = defineProps<{ issue: PublicIssue }>()
 const plain = computed(() => summary(props.issue))
+const { project } = useAppConfig()
+const reportUrl = computed(() => {
+  const ref = `${props.issue.repo}#${props.issue.number}`
+  const params = new URLSearchParams({
+    title: `Wrong classification: ${ref}`,
+    body: `Issue: ${props.issue.url}\n\nWhat looks wrong:\n\nWhat it should say:\n`,
+  })
+  return `${project.repo}/issues/new?${params}`
+})
 const reasons = computed(() => why(props.issue.assessment?.answers))
 const sureText = {
   Confident: 'Jev is confident about this.',
@@ -364,6 +373,9 @@ const maintainer = (a: string) => ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(a
     <footer class="text-xs text-muted border-t border-default pt-4">
       Collected {{ date(issue.retrievedAt) }}. Check GitHub for changes before starting. Markdown is rendered
       safely: raw scripts, styles and embeds are removed and links open in a new tab.
+      <ULink :to="reportUrl" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline"
+        >Report a wrong classification ↗</ULink
+      >
     </footer>
   </div>
 </template>
