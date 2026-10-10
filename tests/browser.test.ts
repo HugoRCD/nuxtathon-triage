@@ -62,7 +62,7 @@ test(
       await page.getByRole('dialog').waitFor()
       assert.match(await page.getByRole('dialog').innerText(), /Thread/)
       assert.equal(
-        await page.getByRole('link', { name: 'Open as a Page' }).getAttribute('href'),
+        await page.getByRole('link', { name: 'Open Full Page' }).getAttribute('href'),
         '/nuxt/nuxters/issues/9',
       )
       const snapshot = await (await page.request.get(`${base}/data/index.json`)).json()

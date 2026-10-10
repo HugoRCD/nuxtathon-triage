@@ -676,20 +676,24 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
       :description="selected ? `${selected.repo} #${selected.number}` : ''"
       :ui="{
         content: 'sm:max-w-3xl',
-        header: 'px-5 py-3.5 min-h-0',
+        header: 'items-start gap-1 px-5 py-3.5 min-h-0',
+        wrapper: 'min-w-0 flex-1 flex flex-col-reverse gap-0.5 pr-2',
         body: 'p-5',
-        title: 'font-heading text-lg leading-6 text-highlighted',
-        description: 'text-sm',
+        title: 'font-heading text-lg leading-6 text-highlighted text-pretty',
+        description: 'mt-0 text-sm tabular-nums',
+        close: 'static',
       }"
     >
       <template #actions>
         <UButton
           v-if="selected"
           :to="issuePath(selected)"
+          label="Full Page"
+          icon="i-lucide-maximize-2"
           color="neutral"
           variant="ghost"
-          icon="i-lucide-maximize-2"
-          aria-label="Open as a Page"
+          size="sm"
+          aria-label="Open Full Page"
         />
       </template>
       <template #body><IssueDetail v-if="selected" :issue="selected" :live="entry(selected)" /></template>

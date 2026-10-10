@@ -64,7 +64,7 @@ async function share() {
       </div>
     </header>
 
-    <main class="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6">
+    <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6">
       <div class="mb-3 flex items-center justify-between gap-3">
         <UButton to="/" color="neutral" variant="link" icon="i-lucide-arrow-left" class="-ml-2.5"
           >All Issues</UButton
@@ -96,7 +96,7 @@ async function share() {
             {{ issue.title }}
           </h1>
         </div>
-        <IssueDetail :issue="issue" :live="entry" />
+        <IssueDetail :issue="issue" :live="entry" split />
       </template>
 
       <UAlert

@@ -4,7 +4,7 @@ import { choice, probability, score, difficulty } from '#shared/filters'
 import { questionLabels, label, scoreLabels, skillKeys, points, age } from '#shared/labels'
 import { summary, why } from '#shared/plain'
 import { describeLive, liveLabels, type LiveEntry } from '#shared/live'
-const props = defineProps<{ issue: PublicIssue; live?: LiveEntry }>()
+const props = defineProps<{ issue: PublicIssue; live?: LiveEntry; split?: boolean }>()
 const plain = computed(() => summary(props.issue))
 const { project } = useAppConfig()
 const reportUrl = computed(() => {
@@ -117,389 +117,413 @@ const tail = computed(() => (folded.value ? props.issue.comments.slice(-KEEP_END
 </script>
 
 <template>
-  <div class="space-y-5">
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0 space-y-2">
-        <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted">
-          <span>Opened {{ date(issue.createdAt) }} ({{ age(issue.ageDays) }})</span>
-          <span aria-hidden="true">·</span>
-          <span class="inline-flex items-center gap-1"
-            ><UIcon name="i-lucide-thumbs-up" class="size-3.5" />{{ issue.thumbsUp }}</span
-          >
-          <span aria-hidden="true">·</span>
-          <span class="font-medium text-primary"
-            >{{ points(issue) }} {{ points(issue) === 1 ? 'point' : 'points' }}</span
-          >
-        </p>
-        <div v-if="issue.labels.length" class="flex flex-wrap gap-1" aria-label="GitHub Labels">
-          <UBadge v-for="l in issue.labels" :key="l" variant="outline" color="neutral">{{ l }}</UBadge>
-        </div>
-      </div>
-      <UButton
-        :to="issue.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        label="GitHub"
-        icon="i-lucide-github"
-        trailing-icon="i-lucide-arrow-up-right"
-        color="neutral"
-        variant="outline"
-        size="sm"
-        class="shrink-0"
-        aria-label="Open on GitHub"
-      />
-    </div>
-
-    <div
-      v-if="live"
-      class="flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm"
-      :class="
-        liveLabels[live.state].color === 'warning'
-          ? 'border-warning/30 bg-warning/5'
-          : liveLabels[live.state].color === 'primary'
-            ? 'border-primary/30 bg-primary/5'
-            : 'border-default bg-elevated/50'
-      "
-      role="status"
+  <div
+    :class="
+      split
+        ? 'space-y-5 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-8 lg:space-y-0'
+        : 'space-y-5'
+    "
+  >
+    <aside
+      aria-label="Summary"
+      :class="[
+        '@container space-y-5',
+        split &&
+          'lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pb-4',
+      ]"
     >
-      <UIcon
-        :name="liveLabels[live.state].icon"
-        class="mt-0.5 size-4 shrink-0"
+      <div class="flex flex-col-reverse gap-3 @md:flex-row @md:items-start @md:justify-between">
+        <div class="min-w-0 space-y-2">
+          <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted">
+            <span>Opened {{ date(issue.createdAt) }} ({{ age(issue.ageDays) }})</span>
+            <span aria-hidden="true">·</span>
+            <span class="inline-flex items-center gap-1"
+              ><UIcon name="i-lucide-thumbs-up" class="size-3.5" />{{ issue.thumbsUp }}</span
+            >
+            <span aria-hidden="true">·</span>
+            <span class="font-medium text-primary"
+              >{{ points(issue) }} {{ points(issue) === 1 ? 'point' : 'points' }}</span
+            >
+          </p>
+          <div v-if="issue.labels.length" class="flex flex-wrap gap-1" aria-label="GitHub Labels">
+            <UBadge v-for="l in issue.labels" :key="l" variant="outline" color="neutral">{{ l }}</UBadge>
+          </div>
+        </div>
+        <UButton
+          :to="issue.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          label="GitHub"
+          icon="i-lucide-github"
+          trailing-icon="i-lucide-arrow-up-right"
+          color="neutral"
+          variant="outline"
+          size="sm"
+          class="shrink-0 justify-center @max-md:w-full"
+          aria-label="Open on GitHub"
+        />
+      </div>
+
+      <div
+        v-if="live"
+        class="flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm"
         :class="
           liveLabels[live.state].color === 'warning'
-            ? 'text-warning'
+            ? 'border-warning/30 bg-warning/5'
             : liveLabels[live.state].color === 'primary'
-              ? 'text-primary'
-              : 'text-muted'
+              ? 'border-primary/30 bg-primary/5'
+              : 'border-default bg-elevated/50'
         "
-      />
-      <p class="min-w-0 flex-1 text-toned">
-        <span class="font-medium text-highlighted">{{ liveLabels[live.state].label }}.</span>
-        {{ describeLive(live) }}
-      </p>
-      <ULink
-        v-if="live.url"
-        :to="live.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="shrink-0 font-medium text-highlighted hover:underline"
-        >View PR ↗</ULink
-      >
-    </div>
-
-    <div
-      v-if="issue.gaps.length"
-      class="flex items-start gap-2.5 rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-sm"
-    >
-      <UIcon name="i-lucide-triangle-alert" class="mt-0.5 size-4 shrink-0 text-warning" />
-      <p class="text-toned">
-        <span class="font-medium text-highlighted">Evidence Gaps.</span> {{ issue.gaps.join(' · ') }}
-      </p>
-    </div>
-
-    <section v-if="plain" aria-label="What to Do" class="rounded-lg border border-default">
-      <div class="space-y-1.5 p-4">
-        <h3 class="flex items-center gap-2 font-heading text-lg text-highlighted">
-          <UIcon :name="plain.step.icon" class="size-5 shrink-0 text-primary" />{{ plain.step.label }}
-        </h3>
-        <p class="text-sm leading-6 text-toned">{{ plain.step.how }}</p>
-      </div>
-      <dl class="grid grid-cols-1 border-t border-default text-sm sm:grid-cols-2 sm:divide-x divide-default">
-        <div class="flex items-center gap-2 px-4 py-2.5">
-          <dt class="flex items-center gap-1.5 text-muted">
-            <UIcon name="i-lucide-clock" class="size-4" /><span class="sr-only sm:not-sr-only">Time</span>
-          </dt>
-          <dd class="font-medium text-highlighted">{{ plain.time?.long ?? 'Hard to say' }}</dd>
-        </div>
-        <div class="flex items-center gap-2 px-4 py-2.5 border-t border-default sm:border-t-0">
-          <dt class="flex items-center gap-1.5 text-muted">
-            <UIcon name="i-lucide-user" class="size-4" /><span class="sr-only sm:not-sr-only">Who</span>
-          </dt>
-          <dd class="font-medium" :class="plain.who?.open ? 'text-primary' : 'text-highlighted'">
-            {{ plain.who?.long ?? 'Not clear who should act next.' }}
-          </dd>
-        </div>
-      </dl>
-      <div class="space-y-2 border-t border-default px-4 py-3">
-        <ul v-if="reasons.length" class="flex flex-wrap gap-x-4 gap-y-1" aria-label="Why">
-          <li v-for="r in reasons" :key="r.text" class="flex items-start gap-1.5 text-sm text-toned">
-            <UIcon
-              :name="r.good ? 'i-lucide-check' : 'i-lucide-triangle-alert'"
-              class="mt-0.5 size-4 shrink-0"
-              :class="r.good ? 'text-primary' : 'text-warning'"
-            />{{ r.text }}
-          </li>
-        </ul>
-        <p class="text-sm text-muted">{{ sureText[plain.sure] }} Check GitHub for recent changes first.</p>
-      </div>
-    </section>
-    <p v-else class="rounded-lg border border-default px-4 py-3 text-sm text-muted">
-      {{
-        issue.status === 'stale'
-          ? 'This assessment is outdated. Read the thread on GitHub.'
-          : 'Jev hasn’t assessed this issue. Everything below is the original GitHub evidence.'
-      }}
-    </p>
-
-    <details v-if="issue.assessment || issue.firstPass" class="group space-y-3">
-      <summary
-        class="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-toned hover:text-highlighted rounded-md focus-visible:outline-2 focus-visible:outline-primary"
+        role="status"
       >
         <UIcon
-          name="i-lucide-chevron-right"
-          class="size-4 text-muted transition-transform group-open:rotate-90"
+          :name="liveLabels[live.state].icon"
+          class="mt-0.5 size-4 shrink-0"
+          :class="
+            liveLabels[live.state].color === 'warning'
+              ? 'text-warning'
+              : liveLabels[live.state].color === 'primary'
+                ? 'text-primary'
+                : 'text-muted'
+          "
         />
-        How Jev Scored This
-      </summary>
-      <div class="flex items-center justify-end gap-3">
-        <div v-if="issue.firstPass && issue.assessment?.stage === 'investigate'" class="flex gap-1">
-          <UButton
-            label="Reassessed"
-            size="sm"
-            color="neutral"
-            :variant="assessmentTab === 'latest' ? 'soft' : 'ghost'"
-            @click="assessmentTab = 'latest'"
-          />
-          <UButton
-            label="First Pass"
-            size="sm"
-            color="neutral"
-            :variant="assessmentTab === 'first' ? 'soft' : 'ghost'"
-            @click="assessmentTab = 'first'"
-          />
-        </div>
-      </div>
-      <template v-if="selected">
-        <dl
-          class="grid grid-cols-2 sm:grid-cols-3 gap-px overflow-hidden rounded-lg border border-default bg-(--ui-border)"
+        <p class="min-w-0 flex-1 text-toned">
+          <span class="font-medium text-highlighted">{{ liveLabels[live.state].label }}.</span>
+          {{ describeLive(live) }}
+        </p>
+        <ULink
+          v-if="live.url"
+          :to="live.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="shrink-0 font-medium text-highlighted hover:underline"
+          >View PR ↗</ULink
         >
-          <div v-for="g in glance" :key="g.title" class="bg-default px-3 py-2.5 space-y-0.5">
-            <dt class="text-xs text-muted">{{ g.title }}</dt>
-            <dd class="text-sm font-medium text-highlighted">
-              {{ g.value
-              }}<span v-if="g.conf !== undefined" class="ml-1.5 font-normal text-muted tabular-nums"
-                >{{ g.conf }}%</span
-              >
+      </div>
+
+      <div
+        v-if="issue.gaps.length"
+        class="flex items-start gap-2.5 rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-sm"
+      >
+        <UIcon name="i-lucide-triangle-alert" class="mt-0.5 size-4 shrink-0 text-warning" />
+        <p class="text-toned">
+          <span class="font-medium text-highlighted">Evidence Gaps.</span> {{ issue.gaps.join(' · ') }}
+        </p>
+      </div>
+
+      <section v-if="plain" aria-label="What to Do" class="rounded-lg border border-default">
+        <div class="space-y-1.5 p-4">
+          <h3 class="flex items-center gap-2 font-heading text-lg text-highlighted">
+            <UIcon :name="plain.step.icon" class="size-5 shrink-0 text-primary" />{{ plain.step.label }}
+          </h3>
+          <p class="text-sm leading-6 text-toned">{{ plain.step.how }}</p>
+        </div>
+        <dl
+          class="grid grid-cols-1 divide-y divide-default border-t border-default text-sm @md:grid-cols-2 @md:divide-x @md:divide-y-0"
+        >
+          <div class="flex items-center gap-2 px-4 py-2.5">
+            <dt class="flex items-center gap-1.5 text-muted">
+              <UIcon name="i-lucide-clock" class="size-4" /><span class="sr-only sm:not-sr-only">Time</span>
+            </dt>
+            <dd class="font-medium text-highlighted">{{ plain.time?.long ?? 'Hard to say' }}</dd>
+          </div>
+          <div class="flex items-center gap-2 px-4 py-2.5 border-t border-default sm:border-t-0">
+            <dt class="flex items-center gap-1.5 text-muted">
+              <UIcon name="i-lucide-user" class="size-4" /><span class="sr-only sm:not-sr-only">Who</span>
+            </dt>
+            <dd class="font-medium" :class="plain.who?.open ? 'text-primary' : 'text-highlighted'">
+              {{ plain.who?.long ?? 'Not clear who should act next.' }}
             </dd>
           </div>
         </dl>
+        <div class="space-y-2 border-t border-default px-4 py-3">
+          <ul v-if="reasons.length" class="flex flex-wrap gap-x-4 gap-y-1" aria-label="Why">
+            <li v-for="r in reasons" :key="r.text" class="flex items-start gap-1.5 text-sm text-toned">
+              <UIcon
+                :name="r.good ? 'i-lucide-check' : 'i-lucide-triangle-alert'"
+                class="mt-0.5 size-4 shrink-0"
+                :class="r.good ? 'text-primary' : 'text-warning'"
+              />{{ r.text }}
+            </li>
+          </ul>
+          <p class="text-sm text-muted">{{ sureText[plain.sure] }} Check GitHub for recent changes first.</p>
+        </div>
+      </section>
+      <p v-else class="rounded-lg border border-default px-4 py-3 text-sm text-muted">
+        {{
+          issue.status === 'stale'
+            ? 'This assessment is outdated. Read the thread on GitHub.'
+            : 'Jev hasn’t assessed this issue. Everything below is the original GitHub evidence.'
+        }}
+      </p>
 
-        <div v-if="signals.length" class="space-y-1">
-          <h4 class="text-sm font-medium text-highlighted pb-1">Signals</h4>
-          <dl class="divide-y divide-default">
-            <div
-              v-for="s in signals"
-              :key="s.key"
-              class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem] items-center gap-3 py-2 text-sm"
-            >
-              <dt class="text-toned">{{ s.title }}</dt>
-              <div class="h-1.5 rounded-full bg-elevated overflow-hidden" aria-hidden="true">
-                <div
-                  class="h-full rounded-full"
-                  :class="
-                    s.verdict === 'Likely'
-                      ? 'bg-primary'
-                      : s.verdict === 'Unsure'
-                        ? 'bg-warning'
-                        : 'bg-accented'
-                  "
-                  :style="{ width: `${Math.max(4, s.pct)}%` }"
-                />
-              </div>
-              <dd
-                class="text-right tabular-nums"
-                :class="s.verdict === 'Likely' ? 'text-highlighted' : 'text-muted'"
-              >
-                {{ s.verdict }}
+      <details v-if="issue.assessment || issue.firstPass" class="group space-y-3">
+        <summary
+          class="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-toned hover:text-highlighted rounded-md focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          <UIcon
+            name="i-lucide-chevron-right"
+            class="size-4 text-muted transition-transform group-open:rotate-90"
+          />
+          How Jev Scored This
+        </summary>
+        <div class="flex items-center justify-end gap-3">
+          <div v-if="issue.firstPass && issue.assessment?.stage === 'investigate'" class="flex gap-1">
+            <UButton
+              label="Reassessed"
+              size="sm"
+              color="neutral"
+              :variant="assessmentTab === 'latest' ? 'soft' : 'ghost'"
+              @click="assessmentTab = 'latest'"
+            />
+            <UButton
+              label="First Pass"
+              size="sm"
+              color="neutral"
+              :variant="assessmentTab === 'first' ? 'soft' : 'ghost'"
+              @click="assessmentTab = 'first'"
+            />
+          </div>
+        </div>
+        <template v-if="selected">
+          <dl
+            class="grid grid-cols-2 @lg:grid-cols-3 gap-px overflow-hidden rounded-lg border border-default bg-(--ui-border)"
+          >
+            <div v-for="g in glance" :key="g.title" class="bg-default px-3 py-2.5 space-y-0.5">
+              <dt class="text-xs text-muted">{{ g.title }}</dt>
+              <dd class="text-sm font-medium text-highlighted">
+                {{ g.value
+                }}<span v-if="g.conf !== undefined" class="ml-1.5 font-normal text-muted tabular-nums"
+                  >{{ g.conf }}%</span
+                >
               </dd>
             </div>
           </dl>
-        </div>
 
-        <div v-if="skills.length" class="flex flex-wrap items-center gap-1.5">
-          <span class="text-sm text-muted mr-1">Skills</span>
-          <UBadge v-for="k in skills" :key="k" color="neutral" variant="subtle">{{
-            label('skill', k)
-          }}</UBadge>
-        </div>
-
-        <UAlert
-          v-if="selected.warnings.length"
-          color="warning"
-          variant="subtle"
-          title="Assessment Notes"
-          :description="selected.warnings.join(' · ')"
-        />
-        <section v-if="selected.evidence" class="space-y-3">
-          <h4 class="text-sm font-medium text-highlighted">Investigation Evidence</h4>
-          <p class="text-sm text-toned whitespace-pre-wrap">{{ selected.evidence.notes }}</p>
-          <div
-            v-for="source in selected.evidence.sources"
-            :key="source.url"
-            class="border border-default rounded-lg p-3 space-y-2"
-          >
-            <div class="flex items-center gap-2">
-              <UBadge size="sm" color="neutral" variant="soft">{{ source.verification }}</UBadge
-              ><a
-                :href="source.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-sm text-primary hover:underline"
-                >Source ↗</a
+          <div v-if="signals.length" class="space-y-1">
+            <h4 class="text-sm font-medium text-highlighted pb-1">Signals</h4>
+            <dl class="divide-y divide-default">
+              <div
+                v-for="s in signals"
+                :key="s.key"
+                class="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem] items-center gap-3 py-2 text-sm"
               >
-            </div>
-            <p v-if="source.ref" class="font-mono text-xs text-muted break-all">{{ source.ref }}</p>
-            <p class="evidence-text text-sm leading-6">{{ source.excerpt }}</p>
+                <dt class="text-toned">{{ s.title }}</dt>
+                <div class="h-1.5 rounded-full bg-elevated overflow-hidden" aria-hidden="true">
+                  <div
+                    class="h-full rounded-full"
+                    :class="
+                      s.verdict === 'Likely'
+                        ? 'bg-primary'
+                        : s.verdict === 'Unsure'
+                          ? 'bg-warning'
+                          : 'bg-accented'
+                    "
+                    :style="{ width: `${Math.max(4, s.pct)}%` }"
+                  />
+                </div>
+                <dd
+                  class="text-right tabular-nums"
+                  :class="s.verdict === 'Likely' ? 'text-highlighted' : 'text-muted'"
+                >
+                  {{ s.verdict }}
+                </dd>
+              </div>
+            </dl>
           </div>
-        </section>
-        <p class="text-xs text-muted">
-          {{
-            selected.stage === 'investigate'
-              ? 'Evidence-enriched reassessment'
-              : 'Issue-thread classification'
-          }}
-          · {{ date(selected.assessedAt) }} · rubric {{ selected.rubricVersion }}. Suggestions, not verified
-          resolutions.
-        </p>
-      </template>
-    </details>
 
-    <section v-if="issue.prs.length" class="space-y-2">
-      <h3 class="font-heading text-base text-highlighted">
-        Linked Pull Requests <span class="text-muted">{{ issue.prs.length }}</span>
-      </h3>
-      <div class="divide-y divide-default rounded-lg border border-default">
-        <a
-          v-for="pr in issue.prs"
-          :key="pr.url"
-          :href="pr.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-start gap-2.5 px-3 py-2 hover:bg-elevated/50"
-        >
-          <UIcon
-            :name="pr.mergedAt ? 'i-lucide-git-merge' : 'i-lucide-git-pull-request'"
-            class="mt-0.5 size-4 shrink-0"
-            :class="pr.state === 'OPEN' ? 'text-primary' : 'text-muted'"
+          <div v-if="skills.length" class="flex flex-wrap items-center gap-1.5">
+            <span class="text-sm text-muted mr-1">Skills</span>
+            <UBadge v-for="k in skills" :key="k" color="neutral" variant="subtle">{{
+              label('skill', k)
+            }}</UBadge>
+          </div>
+
+          <UAlert
+            v-if="selected.warnings.length"
+            color="warning"
+            variant="subtle"
+            title="Assessment Notes"
+            :description="selected.warnings.join(' · ')"
           />
-          <span class="min-w-0 text-sm">
-            <span class="text-highlighted">{{ pr.title }}</span>
-            <span class="text-muted">
-              · {{ pr.mergedAt ? 'Merged' : label('state', pr.state.toLowerCase()) }} ·
-              {{ pr.closing ? 'Linked as closing' : 'Cross-reference' }}</span
+          <section v-if="selected.evidence" class="space-y-3">
+            <h4 class="text-sm font-medium text-highlighted">Investigation Evidence</h4>
+            <p class="text-sm text-toned whitespace-pre-wrap">{{ selected.evidence.notes }}</p>
+            <div
+              v-for="source in selected.evidence.sources"
+              :key="source.url"
+              class="border border-default rounded-lg p-3 space-y-2"
             >
-          </span>
-        </a>
-      </div>
-      <p class="text-sm text-muted">A merged PR alone doesn’t prove the issue is resolved.</p>
-    </section>
+              <div class="flex items-center gap-2">
+                <UBadge size="sm" color="neutral" variant="soft">{{ source.verification }}</UBadge
+                ><a
+                  :href="source.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm text-primary hover:underline"
+                  >Source ↗</a
+                >
+              </div>
+              <p v-if="source.ref" class="font-mono text-xs text-muted break-all">{{ source.ref }}</p>
+              <p class="evidence-text text-sm leading-6">{{ source.excerpt }}</p>
+            </div>
+          </section>
+          <p class="text-xs text-muted">
+            {{
+              selected.stage === 'investigate'
+                ? 'Evidence-enriched reassessment'
+                : 'Issue-thread classification'
+            }}
+            · {{ date(selected.assessedAt) }} · rubric {{ selected.rubricVersion }}. Suggestions, not verified
+            resolutions.
+          </p>
+        </template>
+      </details>
+    </aside>
 
-    <section class="space-y-2">
-      <h3 class="font-heading text-base text-highlighted">
-        Thread <span class="text-muted">{{ issue.comments.length + 1 }}</span>
-      </h3>
-      <ol
-        class="relative space-y-3 before:absolute before:inset-y-2 before:left-3.5 before:w-px before:bg-(--ui-border)"
-      >
-        <li class="relative flex gap-2.5">
-          <UAvatar :src="avatar(issue.author)" :alt="issue.author" size="sm" class="ring-4 ring-(--ui-bg)" />
-          <article class="min-w-0 flex-1 rounded-lg border border-default bg-default">
-            <header
-              class="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 border-b border-default bg-elevated/40 text-sm"
-            >
-              <a
-                :href="`https://github.com/${issue.author}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-medium text-highlighted hover:underline"
-                >{{ issue.author }}</a
-              >
-              <span class="text-muted">opened {{ date(issue.createdAt) }}</span>
-              <UBadge size="sm" color="neutral" variant="outline" class="ml-auto">Author</UBadge>
-            </header>
-            <IssueMarkdown
-              :key="issue.id"
-              :value="issue.body"
-              :repo="issue.repo"
-              :people="people"
-              class="px-3 py-2.5 max-h-[32rem] overflow-y-auto"
+    <div :class="['min-w-0 space-y-5', split && 'lg:col-start-1 lg:row-start-1']">
+      <section v-if="issue.prs.length" class="space-y-2">
+        <h3 class="font-heading text-base text-highlighted">
+          Linked Pull Requests <span class="text-muted">{{ issue.prs.length }}</span>
+        </h3>
+        <div class="divide-y divide-default rounded-lg border border-default">
+          <a
+            v-for="pr in issue.prs"
+            :key="pr.url"
+            :href="pr.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-start gap-2.5 px-3 py-2 hover:bg-elevated/50"
+          >
+            <UIcon
+              :name="pr.mergedAt ? 'i-lucide-git-merge' : 'i-lucide-git-pull-request'"
+              class="mt-0.5 size-4 shrink-0"
+              :class="pr.state === 'OPEN' ? 'text-primary' : 'text-muted'"
             />
-          </article>
-        </li>
+            <span class="min-w-0 text-sm">
+              <span class="text-highlighted">{{ pr.title }}</span>
+              <span class="text-muted">
+                · {{ pr.mergedAt ? 'Merged' : label('state', pr.state.toLowerCase()) }} ·
+                {{ pr.closing ? 'Linked as closing' : 'Cross-reference' }}</span
+              >
+            </span>
+          </a>
+        </div>
+        <p class="text-sm text-muted">A merged PR alone doesn’t prove the issue is resolved.</p>
+      </section>
 
-        <template v-for="(part, index) in [head, tail]" :key="index">
-          <li v-if="index === 1 && folded" class="relative flex justify-center">
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              icon="i-lucide-chevrons-up-down"
-              class="bg-default"
-              @click="unfolded = true"
-              >Show {{ folded }} Hidden Comments</UButton
-            >
-          </li>
-          <li v-for="comment in part" :key="comment.url" class="relative flex gap-2.5">
+      <section class="space-y-2">
+        <h3 class="font-heading text-base text-highlighted">
+          Thread <span class="text-muted">{{ issue.comments.length + 1 }}</span>
+        </h3>
+        <ol
+          class="relative space-y-3 before:absolute before:inset-y-2 before:left-3.5 before:w-px before:bg-(--ui-border)"
+        >
+          <li class="relative flex gap-2.5">
             <UAvatar
-              :src="avatar(comment.author)"
-              :alt="comment.author"
+              :src="avatar(issue.author)"
+              :alt="issue.author"
               size="sm"
               class="ring-4 ring-(--ui-bg)"
             />
-            <article
-              class="min-w-0 flex-1 rounded-lg border bg-default"
-              :class="maintainer(comment.association) ? 'border-primary/40' : 'border-default'"
-            >
+            <article class="min-w-0 flex-1 rounded-lg border border-default bg-default">
               <header
-                class="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 border-b text-sm"
-                :class="
-                  maintainer(comment.association)
-                    ? 'border-primary/30 bg-primary/5'
-                    : 'border-default bg-elevated/40'
-                "
+                class="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 border-b border-default bg-elevated/40 text-sm"
               >
                 <a
-                  :href="`https://github.com/${comment.author}`"
+                  :href="`https://github.com/${issue.author}`"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="font-medium text-highlighted hover:underline"
-                  >{{ comment.author }}</a
+                  >{{ issue.author }}</a
                 >
-                <a
-                  :href="comment.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-muted hover:underline"
-                  >{{ date(comment.createdAt) }}</a
-                >
-                <span class="ml-auto flex gap-1.5">
-                  <UBadge v-if="comment.author === issue.author" size="sm" color="neutral" variant="outline"
-                    >Author</UBadge
-                  >
-                  <UBadge v-if="maintainer(comment.association)" size="sm" color="primary" variant="soft">{{
-                    label('association', comment.association.toLowerCase())
-                  }}</UBadge>
-                </span>
+                <span class="text-muted">opened {{ date(issue.createdAt) }}</span>
+                <UBadge size="sm" color="neutral" variant="outline" class="ml-auto">Author</UBadge>
               </header>
               <IssueMarkdown
-                :value="comment.body"
+                :key="issue.id"
+                :value="issue.body"
                 :repo="issue.repo"
                 :people="people"
-                empty="Empty comment."
-                class="px-3 py-2.5"
+                class="px-3 py-2.5 max-h-[32rem] overflow-y-auto"
               />
             </article>
           </li>
-        </template>
-      </ol>
-      <p v-if="!issue.comments.length" class="pl-10 text-sm text-muted">No comments yet.</p>
-    </section>
 
-    <footer class="flex flex-wrap gap-x-3 gap-y-1 border-t border-default pt-3 text-sm text-muted">
-      <span>Snapshot from {{ date(issue.retrievedAt) }}. Check GitHub before starting.</span>
-      <ULink :to="reportUrl" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline"
-        >Report a Wrong Classification ↗</ULink
-      >
-    </footer>
+          <template v-for="(part, index) in [head, tail]" :key="index">
+            <li v-if="index === 1 && folded" class="relative flex justify-center">
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="sm"
+                icon="i-lucide-chevrons-up-down"
+                class="bg-default"
+                @click="unfolded = true"
+                >Show {{ folded }} Hidden Comments</UButton
+              >
+            </li>
+            <li v-for="comment in part" :key="comment.url" class="relative flex gap-2.5">
+              <UAvatar
+                :src="avatar(comment.author)"
+                :alt="comment.author"
+                size="sm"
+                class="ring-4 ring-(--ui-bg)"
+              />
+              <article
+                class="min-w-0 flex-1 rounded-lg border bg-default"
+                :class="maintainer(comment.association) ? 'border-primary/40' : 'border-default'"
+              >
+                <header
+                  class="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1.5 border-b text-sm"
+                  :class="
+                    maintainer(comment.association)
+                      ? 'border-primary/30 bg-primary/5'
+                      : 'border-default bg-elevated/40'
+                  "
+                >
+                  <a
+                    :href="`https://github.com/${comment.author}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-medium text-highlighted hover:underline"
+                    >{{ comment.author }}</a
+                  >
+                  <a
+                    :href="comment.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-muted hover:underline"
+                    >{{ date(comment.createdAt) }}</a
+                  >
+                  <span class="ml-auto flex gap-1.5">
+                    <UBadge v-if="comment.author === issue.author" size="sm" color="neutral" variant="outline"
+                      >Author</UBadge
+                    >
+                    <UBadge v-if="maintainer(comment.association)" size="sm" color="primary" variant="soft">{{
+                      label('association', comment.association.toLowerCase())
+                    }}</UBadge>
+                  </span>
+                </header>
+                <IssueMarkdown
+                  :value="comment.body"
+                  :repo="issue.repo"
+                  :people="people"
+                  empty="Empty comment."
+                  class="px-3 py-2.5"
+                />
+              </article>
+            </li>
+          </template>
+        </ol>
+        <p v-if="!issue.comments.length" class="pl-10 text-sm text-muted">No comments yet.</p>
+      </section>
+
+      <footer class="flex flex-wrap gap-x-3 gap-y-1 border-t border-default pt-3 text-sm text-muted">
+        <span>Snapshot from {{ date(issue.retrievedAt) }}. Check GitHub before starting.</span>
+        <ULink :to="reportUrl" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline"
+          >Report a Wrong Classification ↗</ULink
+        >
+      </footer>
+    </div>
   </div>
 </template>
