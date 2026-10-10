@@ -218,7 +218,11 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
         <span v-if="data" class="hidden md:block text-sm text-muted mr-3 tabular-nums">
           {{ number(data.manifest.assessed) }} of {{ number(data.manifest.issues) }} classified
         </span>
-        <AgentSetup />
+        <AgentSetup>
+          <UButton aria-label="Connect Your Agent" color="neutral" variant="ghost" square class="lg:hidden">
+            <template #leading><McpIcon class="size-5" /></template>
+          </UButton>
+        </AgentSetup>
         <ThemeMenu />
         <UButton
           :to="project.repo"
@@ -293,7 +297,28 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
             Issues created before 9 October. Repositories you maintain don’t count.
           </p>
         </section>
-        <section class="mt-auto space-y-2 border-t border-default pt-5 px-2">
+        <section class="mt-auto space-y-3 rounded-lg border border-default bg-elevated/40 p-3">
+          <div class="flex gap-1.5">
+            <AgentLogo
+              v-for="item in agentClients.filter((c) => c.logo)"
+              :key="item.id"
+              :src="item.logo"
+              size="sm"
+            />
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-highlighted">Use It From Your Agent</p>
+            <p class="text-sm text-muted leading-6">
+              Let Claude Code, Cursor, VS Code or Codex search these issues for you.
+            </p>
+          </div>
+          <AgentSetup>
+            <UButton label="Connect Your Agent" color="neutral" variant="outline" block>
+              <template #leading><McpIcon class="size-4" /></template>
+            </UButton>
+          </AgentSetup>
+        </section>
+        <section class="space-y-2 border-t border-default pt-5 px-2">
           <p class="text-sm font-medium text-highlighted">Open Source</p>
           <p class="text-sm text-muted leading-6">
             Spotted a bug or have an idea? Improvements to the app and agent tools are welcome.

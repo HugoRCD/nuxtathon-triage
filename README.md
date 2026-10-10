@@ -8,7 +8,7 @@ Classifications are suggestions from a snapshot. Check the issue on GitHub befor
 
 ## Use it with your coding agent
 
-Click **Connect Your Coding Agent** on the site, or add the MCP server yourself:
+Click **Connect Your Agent** on the site, or add the MCP server yourself:
 
 ```sh
 # Claude Code
