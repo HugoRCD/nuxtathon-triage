@@ -1,4 +1,5 @@
 import type { Answers, PublicIssue } from './types.ts'
+import { hiddenBy, liveEntry, type LiveStatus } from './live.ts'
 import { points } from './labels.ts'
 import { leans, ease } from './plain.ts'
 export function choice(answers: Answers | undefined, key: string): string {
@@ -45,6 +46,7 @@ export type Filters = {
   skill: string
   eligibility: string
   status: string
+  availability: string
   sort: string
 }
 export const defaultFilters: Filters = {
@@ -58,6 +60,7 @@ export const defaultFilters: Filters = {
   skill: 'all',
   eligibility: 'eligible',
   status: 'all',
+  availability: 'free',
   sort: 'easiest',
 }
 const quick = ['underHour', 'fewHours']
@@ -86,7 +89,7 @@ export function inView(i: PublicIssue, view: string): boolean {
       return true
   }
 }
-export function filterIssues(issues: PublicIssue[], f: Filters): PublicIssue[] {
+export function filterIssues(issues: PublicIssue[], f: Filters, live?: LiveStatus | null): PublicIssue[] {
   const q = f.q.toLowerCase()
   const filtered = issues.filter((i) => {
     const a = i.assessment?.answers
@@ -94,6 +97,7 @@ export function filterIssues(issues: PublicIssue[], f: Filters): PublicIssue[] {
     if (q && !`${i.repo} #${i.number} ${i.title} ${i.labels.join(' ')} ${i.body}`.toLowerCase().includes(q))
       return false
     if (f.repo !== 'all' && i.repo !== f.repo) return false
+    if (hiddenBy(liveEntry(live, i.id), f.availability)) return false
     if (f.eligibility === 'eligible' && (!i.eligible || i.repository.archived)) return false
     if (f.eligibility === 'ineligible' && i.eligible) return false
     if (f.type !== 'all' && choice(a, 'workType') !== f.type) return false

@@ -8,6 +8,7 @@ import { defaultFilters, filterIssues, type Filters } from './filters.ts'
 import { age, points } from './labels.ts'
 import { steps, summary, why } from './plain.ts'
 import { cleanMarkdown } from './markdown.ts'
+import { availabilities, describeLive, liveEntry, type LiveStatus } from './live.ts'
 
 export const views = ['all', 'quick', 'newcomer', 'closure', 'questions', 'docs'] as const
 export const times = ['underHour', 'fewHours', 'dayOrMore', 'unclear'] as const
@@ -24,12 +25,13 @@ export const nextSteps = [
 ] as const
 export const skills = ['vue', 'typescript', 'css', 'server', 'testing', 'documentation', 'tooling'] as const
 export const sorts = ['easiest', 'points', 'oldest', 'updated'] as const
+export { availabilities }
 
 export const rules =
   'Nuxtathon scoring: 1 point per closed issue, +1 if the issue is older than 12 months, +1 per 5 👍. Only issues created before 9 October 2026 count, and issues in repositories you maintain do not count.'
 
 export const caveat =
-  'This is a snapshot classified by Jev, not live GitHub state. Re-read the issue on GitHub before starting, check nobody is already on it, and treat the classification as a suggestion.'
+  'Classifications come from a Jev snapshot. liveStatus is refreshed from GitHub and nuxtathon.live every few minutes, so it can lag: re-read the issue on GitHub before starting and treat the classification as a suggestion.'
 
 /** Hard caps so one tool call can't flood an agent's context. */
 export const BODY_LIMIT = 12_000
@@ -46,6 +48,7 @@ export type SearchInput = {
   nextStep?: (typeof nextSteps)[number]
   skill?: (typeof skills)[number]
   includeIneligible?: boolean
+  availability?: (typeof availabilities)[number]
   sort?: (typeof sorts)[number]
   limit?: number
   offset?: number
@@ -61,8 +64,9 @@ function clip(text: string, limit: number) {
 }
 
 /** One compact line per issue: enough to choose, not enough to flood. */
-export function row(issue: PublicIssue) {
+export function row(issue: PublicIssue, live?: LiveStatus | null) {
   const s = summary(issue)
+  const l = liveEntry(live, issue.id)
   return {
     id: issue.id,
     url: issue.url,
@@ -80,10 +84,11 @@ export function row(issue: PublicIssue) {
     whoCanAct: s?.who?.long ?? (s ? 'Not clear who should act next.' : null),
     nextStep: s ? s.step.label : null,
     sureness: s?.sure ?? null,
+    liveStatus: l ? { state: l.state, text: describeLive(l), url: l.url ?? null, at: l.at ?? null } : null,
   }
 }
 
-export function searchIssues(data: Dataset, input: SearchInput = {}) {
+export function searchIssues(data: Dataset, input: SearchInput = {}, live?: LiveStatus | null) {
   const filters: Filters = {
     ...defaultFilters,
     q: input.query?.trim() ?? '',
@@ -95,16 +100,18 @@ export function searchIssues(data: Dataset, input: SearchInput = {}) {
     action: input.nextStep ?? 'all',
     skill: input.skill ?? 'all',
     eligibility: input.includeIneligible ? 'all' : 'eligible',
+    availability: input.availability ?? 'free',
     sort: input.sort ?? 'easiest',
   }
   const limit = Math.min(Math.max(Math.trunc(input.limit ?? 10), 1), 50)
   const offset = Math.max(Math.trunc(input.offset ?? 0), 0)
-  const all = filterIssues(data.issues, filters)
+  const all = filterIssues(data.issues, filters, live)
   return {
     total: all.length,
     offset,
     nextOffset: offset + limit < all.length ? offset + limit : null,
-    issues: all.slice(offset, offset + limit).map(row),
+    issues: all.slice(offset, offset + limit).map((i) => row(i, live)),
+    liveCheckedAt: live?.generatedAt ?? null,
     note: caveat,
   }
 }
@@ -117,7 +124,7 @@ export function findIssue(data: Dataset, ref: string): PublicIssue | null {
   return data.issues.find((i) => i.id.toLowerCase() === id) ?? null
 }
 
-export function issueDetail(issue: PublicIssue) {
+export function issueDetail(issue: PublicIssue, live?: LiveStatus | null) {
   const s = summary(issue)
   const body = clip(cleanMarkdown(issue.body), BODY_LIMIT)
   const comments = issue.comments.slice(-MAX_COMMENTS).map((c) => {
@@ -125,7 +132,7 @@ export function issueDetail(issue: PublicIssue) {
     return { author: c.author, role: c.association, createdAt: c.createdAt, url: c.url, body: b.text }
   })
   return {
-    ...row(issue),
+    ...row(issue, live),
     state: issue.state,
     author: issue.author,
     createdAt: issue.createdAt,
@@ -154,7 +161,7 @@ export function issueDetail(issue: PublicIssue) {
   }
 }
 
-export function overview(data: Dataset) {
+export function overview(data: Dataset, live?: LiveStatus | null) {
   const open = data.issues.filter((i) => i.state === 'OPEN')
   const repos = new Map<string, { open: number; eligible: number }>()
   for (const i of open) {
@@ -163,13 +170,23 @@ export function overview(data: Dataset) {
     if (i.eligible && !i.repository.archived) r.eligible++
     repos.set(i.repo, r)
   }
-  const count = (view: (typeof views)[number]) => searchIssues(data, { view, limit: 1 }).total
+  const count = (view: (typeof views)[number]) => searchIssues(data, { view, limit: 1 }, live).total
   return {
     generatedAt: data.manifest.generatedAt,
     scope: data.manifest.scope,
     issues: data.manifest.issues,
     assessed: data.manifest.assessed,
     model: data.manifest.model,
+    live: live
+      ? {
+          checkedAt: live.generatedAt,
+          byState: Object.values(live.issues).reduce<Record<string, number>>((acc, e) => {
+            acc[e.state] = (acc[e.state] ?? 0) + 1
+            return acc
+          }, {}),
+          note: 'search_issues hides taken issues by default: closed, counted on nuxtathon.live, or with a PR or assignee since the event started. Pass availability "quiet" to also hide issues with new comments.',
+        }
+      : null,
     views: {
       quick: {
         count: count('quick'),

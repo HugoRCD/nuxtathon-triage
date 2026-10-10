@@ -1,11 +1,21 @@
 import { z } from 'zod'
-import { nextSteps, searchIssues, skills, sorts, times, views, whos, workTypes } from '#shared/agent'
+import {
+  availabilities,
+  nextSteps,
+  searchIssues,
+  skills,
+  sorts,
+  times,
+  views,
+  whos,
+  workTypes,
+} from '#shared/agent'
 
 export default defineMcpTool({
   name: 'search_issues',
   title: 'Search Issues',
   description:
-    'Find open issues in the nuxt and nuxt-modules GitHub orgs that are worth picking up, using the same filters and order as the Nuxtathon explorer. Returns compact rows; call get_issue for the full thread. By default only issues that count for Nuxtathon are returned, easiest first.',
+    'Find open issues in the nuxt and nuxt-modules GitHub orgs that are worth picking up, using the same filters and order as the Nuxtathon explorer. Returns compact rows; call get_issue for the full thread. By default only issues that count for Nuxtathon and that nobody has taken are returned, easiest first.',
   inputSchema: {
     query: z.string().max(200).optional().describe('Words to match in the repo, title, labels or body.'),
     repo: z
@@ -28,6 +38,12 @@ export default defineMcpTool({
       .boolean()
       .optional()
       .describe('Also include issues that do not count for Nuxtathon (created too late or archived repos).'),
+    availability: z
+      .enum(availabilities)
+      .optional()
+      .describe(
+        'free (default) hides taken issues: closed, counted on nuxtathon.live, or with a PR or assignee since the event started. quiet also hides issues with new comments. changed shows only those. all shows everything.',
+      ),
     sort: z.enum(sorts).optional().describe('easiest (default), points, oldest or updated.'),
     limit: z.number().int().min(1).max(50).optional().describe('Results per page, 1–50. Default 10.'),
     offset: z.number().int().min(0).optional().describe('Skip this many results, for paging.'),
@@ -38,6 +54,7 @@ export default defineMcpTool({
     { repo: 'nuxt/nuxt', type: 'docs' },
   ],
   async handler(input) {
-    return jsonResult(searchIssues(await useDataset(), input), false)
+    const [data, live] = await Promise.all([useDataset(), useLiveStatus()])
+    return jsonResult(searchIssues(data, input, live), false)
   },
 })

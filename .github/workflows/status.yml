@@ -1,0 +1,39 @@
+name: Live Status
+
+# Refreshes status.json on the `status` branch: closed issues, pull requests and
+# assignments since the event started, and what nuxtathon.live already counted.
+# Uses only the built-in GITHUB_TOKEN; nothing secret reaches the app.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-status
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: node scripts/live.ts --out "$RUNNER_TEMP/status/status.json"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish to the status branch
+        working-directory: ${{ runner.temp }}/status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo '{"git":{"deploymentEnabled":false}}' > vercel.json
+          git init -q -b status
+          git add status.json vercel.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -qm 'Update live status'
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" status

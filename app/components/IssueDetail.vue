@@ -3,7 +3,8 @@ import type { PublicIssue, Assessment } from '#shared/types'
 import { choice, probability, score, difficulty } from '#shared/filters'
 import { questionLabels, label, scoreLabels, skillKeys, points, age } from '#shared/labels'
 import { summary, why } from '#shared/plain'
-const props = defineProps<{ issue: PublicIssue }>()
+import { describeLive, liveLabels, type LiveEntry } from '#shared/live'
+const props = defineProps<{ issue: PublicIssue; live?: LiveEntry }>()
 const plain = computed(() => summary(props.issue))
 const { project } = useAppConfig()
 const reportUrl = computed(() => {
@@ -111,6 +112,30 @@ const maintainer = (a: string) => ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(a
         variant="outline"
       />
     </div>
+
+    <UAlert
+      v-if="live"
+      :color="liveLabels[live.state].color"
+      variant="subtle"
+      :icon="liveLabels[live.state].icon"
+      :title="liveLabels[live.state].label"
+      :description="describeLive(live)"
+      :actions="
+        live.url
+          ? [
+              {
+                label: 'View Pull Request',
+                to: live.url,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                trailingIcon: 'i-lucide-arrow-up-right',
+                color: 'neutral',
+                variant: 'subtle',
+              },
+            ]
+          : undefined
+      "
+    />
 
     <UAlert
       v-if="issue.gaps.length"

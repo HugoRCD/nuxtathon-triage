@@ -16,6 +16,7 @@ User-facing wording for Jev answers lives in `shared/plain.ts`. Keep it plain: o
 - Publish a shared, read-only explorer backed by batch-generated data. Visitors and MCP clients cannot trigger model calls or modify GitHub. MCP tools (`server/mcp/tools/`) stay read-only and size-bounded; put logic in `shared/agent.ts`.
 - The runner and its credentials/local checkpoints stay outside the public app and public export.
 - Never automatically comment, label, assign, close or merge GitHub resources.
+- The live status layer (`scripts/live.ts`, `.github/workflows/status.yml`, `shared/live.ts`) only reads GitHub and the public nuxtathon.live API, never calls Jev, and publishes to the `status` branch with the workflow `GITHUB_TOKEN`. The app and MCP fetch the public file; never add a token to the app or Vercel. Use nuxtathon.live data only to flag or hide issues, not to mirror its leaderboard.
 
 ## Evidence and correctness
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Dataset, PublicIssue } from '#shared/types'
+import { LIVE_URL, liveEntry, type LiveStatus } from '#shared/live'
 import { defaultFilters, filterIssues, type Filters } from '#shared/filters'
 import { points, age } from '#shared/labels'
 import { summary, time, who, steps, types } from '#shared/plain'
@@ -7,6 +8,22 @@ const { project } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
 const { data, status, error, refresh } = await useFetch<Dataset>('/data/index.json', { server: false })
+// Live status from the `status` branch: public, cached ~5 min by GitHub, no token.
+const { data: live, refresh: refreshLive } = useFetch<LiveStatus | null>(LIVE_URL, {
+  server: false,
+  lazy: true,
+  default: () => null,
+  parseResponse: (text) => {
+    const s = JSON.parse(text) as LiveStatus
+    return s && typeof s.issues === 'object' ? s : null
+  },
+})
+let liveTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  liveTimer = setInterval(() => refreshLive(), 5 * 60_000)
+})
+onBeforeUnmount(() => clearInterval(liveTimer))
+const entry = (i: PublicIssue) => liveEntry(live.value, i.id)
 const filters = reactive<Filters>({ ...defaultFilters })
 function readQuery() {
   for (const key of Object.keys(defaultFilters) as (keyof Filters)[])
@@ -26,7 +43,14 @@ watch(filters, () => {
   }, 120)
 })
 onBeforeUnmount(() => clearTimeout(updateTimer))
-const rows = computed(() => filterIssues(data.value?.issues ?? [], filters))
+const rows = computed(() => filterIssues(data.value?.issues ?? [], filters, live.value))
+const hiddenCount = computed(() =>
+  live.value && filters.availability !== 'all'
+    ? filterIssues(data.value?.issues ?? [], { ...filters, availability: 'all' }, live.value).length -
+      rows.value.length
+    : 0,
+)
+const clock = (s: string) => new Date(s).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 const repos = computed(() => [
   { label: 'All Repositories', value: 'all' },
   ...[...new Set(data.value?.issues.map((i) => i.repo) ?? [])].sort().map((r) => ({ label: r, value: r })),
@@ -99,7 +123,7 @@ const viewCounts = computed(() =>
   Object.fromEntries(
     views.map((v) => [
       v.id,
-      filterIssues(data.value?.issues ?? [], { ...defaultFilters, view: v.id }).length,
+      filterIssues(data.value?.issues ?? [], { ...defaultFilters, view: v.id }, live.value).length,
     ]),
   ),
 )
@@ -148,6 +172,16 @@ const moreFilters = [
       documentation: 'Documentation',
       tooling: 'Tooling',
     }),
+  },
+  {
+    key: 'availability' as const,
+    label: 'Availability',
+    items: [
+      { label: 'Hide Taken', value: 'free' },
+      { label: 'Hide Taken and Active', value: 'quiet' },
+      { label: 'Changed During Event', value: 'changed' },
+      { label: 'Show Everything', value: 'all' },
+    ],
   },
   {
     key: 'eligibility' as const,
@@ -404,7 +438,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
             <div
               v-if="showFilters"
               id="advanced-filters"
-              class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 rounded-lg border border-default bg-muted/40 p-4"
+              class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3 rounded-lg border border-default bg-muted/40 p-4"
             >
               <UFormField v-for="field in moreFilters" :key="field.key" :label="field.label"
                 ><USelect
@@ -479,10 +513,38 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
 
           <section aria-label="Issue Results">
             <div class="flex items-center justify-between gap-3 pb-3">
-              <p class="text-sm text-muted" aria-live="polite">
-                <span class="text-highlighted tabular-nums">{{ number(rows.length) }}</span>
-                {{ rows.length === 1 ? 'issue' : 'issues' }}
-              </p>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+                <p aria-live="polite">
+                  <span class="text-highlighted tabular-nums">{{ number(rows.length) }}</span>
+                  {{ rows.length === 1 ? 'issue' : 'issues' }}
+                </p>
+                <template v-if="hiddenCount">
+                  <span class="text-dimmed" aria-hidden="true">·</span>
+                  <span
+                    ><span class="tabular-nums">{{ number(hiddenCount) }}</span>
+                    {{ filters.availability === 'changed' ? 'unchanged' : 'taken' }} hidden</span
+                  >
+                  <UButton
+                    label="Show"
+                    size="xs"
+                    color="neutral"
+                    variant="link"
+                    class="px-0"
+                    @click="filters.availability = 'all'"
+                  />
+                </template>
+                <template v-if="live">
+                  <span class="text-dimmed" aria-hidden="true">·</span>
+                  <UTooltip
+                    text="Closed issues, new pull requests, assignees and nuxtathon.live credits, refreshed every 10 minutes."
+                  >
+                    <span class="flex items-center gap-1.5"
+                      ><span class="size-1.5 rounded-full bg-primary" aria-hidden="true" />Live status
+                      {{ clock(live.generatedAt) }}</span
+                    >
+                  </UTooltip>
+                </template>
+              </div>
               <USelect
                 v-model="filters.sort"
                 :items="sortItems"
@@ -524,8 +586,9 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                         ><UIcon name="i-lucide-thumbs-up" class="size-3.5" />{{ issue.thumbsUp
                         }}<span class="sr-only">thumbs-up</span></span
                       >
+                      <LiveBadge v-if="entry(issue)" :entry="entry(issue)!" />
                       <span
-                        v-if="issue.prs.some((p) => p.state === 'OPEN')"
+                        v-else-if="issue.prs.some((p) => p.state === 'OPEN')"
                         class="flex items-center gap-1 text-primary"
                         ><UIcon name="i-lucide-git-pull-request" class="size-3.5" />Open PR</span
                       >
@@ -632,7 +695,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
         description: 'text-sm',
       }"
     >
-      <template #body><IssueDetail v-if="selected" :issue="selected" /></template>
+      <template #body><IssueDetail v-if="selected" :issue="selected" :live="entry(selected)" /></template>
     </USlideover>
   </div>
 </template>

@@ -4,7 +4,7 @@ Find open issues in the `nuxt` and `nuxt-modules` organisations worth closing du
 
 **Live:** <https://nuxtathon-triage.vercel.app>
 
-Classifications are suggestions from a snapshot. Check the issue on GitHub before you start. The site and MCP server are read-only.
+Classifications are suggestions from a snapshot. A live status layer hides issues that were closed, credited on nuxtathon.live, or picked up (new PR or assignee) since the event started. It refreshes every 10 minutes, so check the issue on GitHub before you start. The site and MCP server are read-only.
 
 ## Use it with your coding agent
 
@@ -66,6 +66,8 @@ pnpm triage export --allow-partial  # write public/data/index.json
 - `--max-cost` is in USD and applies per run. Without flags, `classify` runs a 10-issue pilot.
 - Reruns skip unchanged issues; add `--retry-failed` to retry failures.
 - There is no fallback model, and long threads are skipped rather than truncated.
+
+The live status comes from the `Live Status` workflow, which runs `node scripts/live.ts` every 10 minutes with the workflow's own `GITHUB_TOKEN` and pushes `status.json` to the `status` branch. It makes no model calls, and the app reads the file from GitHub, so no token is involved. Run it locally with `node scripts/live.ts --out /tmp/status.json`.
 
 [SPEC.md](./SPEC.md) explains scope and design, and [PILOT.md](./PILOT.md) has measured cost and accuracy.
 

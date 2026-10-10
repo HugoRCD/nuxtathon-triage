@@ -189,6 +189,15 @@ A public, unauthenticated, read-only MCP endpoint (`/mcp`, `@nuxtjs/mcp-toolkit`
 - Views: All Issues, Quick Wins (anyone can act, under a few hours, no open PR), Good First Issues, Maybe Already Fixed, Questions to Answer, Documentation. Sorts: Easiest First (default: anyone-can-act first, then time, Unsure sinks), Most Points, Recently Updated, Oldest First.
 - The detail panel leads with a What to Do card: next step and how to do it, time needed, who can act, confident reasons (signals with p ≥ 0.8 or ≤ 0.2) and how sure Jev is. The detailed At a Glance grid and Signals bars are folded under "How Jev Scored This". Raw probabilities are hidden. Points follow the event rules: 1, +1 if older than 12 months, +1 per 5 thumbs-up.
 
+## Live status — decided 10 October 2026
+
+- Purpose: stop people starting an issue someone already took, and surface issues that moved, without duplicating nuxtathon.live. Its data is used only to flag or hide issues; the explorer keeps its "View Event" link.
+- Source: every 10 minutes the `Live Status` GitHub Action reads all open snapshot issues through batched GraphQL (about 90 rate-limit points per run) plus `nuxtathon.live/api/v1/event` and `/leaderboard?include=contributions`, then force-pushes `status.json` to the `status` branch. Vercel ignores that branch. The job stops two days after the event ends.
+- Serving: the explorer fetches `raw.githubusercontent.com/.../status/status.json` in the browser (CORS open, cached about five minutes) and refreshes it every five minutes; MCP tools fetch it with a one-minute cache. No token reaches the app. If the file is missing, everything falls back to the snapshot.
+- States, most decisive first: Counted (credited on nuxtathon.live), Closed, Fix Merged, PR Open (opened since the event started), Assigned (since the start and still assigned), New Activity (a human comment since the start). Older open PRs stay visible because they are already in the snapshot and often abandoned.
+- Availability filter: Hide Taken (default; hides all but New Activity), Hide Taken and Active, Changed During Event, Show Everything. MCP `search_issues` takes the same `availability` values, and rows carry `liveStatus`.
+- No Jev calls. Claims are not public on nuxtathon.live, so an issue can be taken without a visible signal.
+
 ## Open decisions and deferred work
 
 - Implemented defaults: Nuxt + Nuxt UI, TypeScript scripts, local SQLite and the two-organisation inventory. Full-org collection remains to be run; the included snapshot is a bounded 30-issue real sample.

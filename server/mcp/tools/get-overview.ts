@@ -7,6 +7,7 @@ export default defineMcpTool({
     'Summarise the snapshot: when it was collected, how many issues each shortcut list holds, open and eligible counts per repository, and the Nuxtathon scoring rules. Call this first.',
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   async handler() {
-    return jsonResult(overview(await useDataset()), false)
+    const [data, live] = await Promise.all([useDataset(), useLiveStatus()])
+    return jsonResult(overview(data, live), false)
   },
 })
