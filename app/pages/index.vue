@@ -385,7 +385,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
       </aside>
 
       <main ref="main" class="flex-1 min-w-0 overflow-y-auto">
-        <div class="sticky top-0 z-10 bg-default/95 backdrop-blur border-b border-default">
+        <div class="sticky top-0 z-20 bg-default border-b border-default">
           <div class="px-4 sm:px-6 pt-5 pb-4 space-y-4">
             <div class="flex items-start justify-between gap-4">
               <div class="min-w-0">
@@ -587,7 +587,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                 <article
                   v-for="issue in pageRows"
                   :key="issue.id"
-                  class="relative grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_11rem_4rem_4rem_2rem] gap-x-4 gap-y-2 px-4 py-3.5 items-center transition-colors hover:bg-elevated/50"
+                  class="relative isolate grid grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_11rem_4rem_4rem_2rem] gap-x-4 gap-y-2 px-4 py-3.5 items-center transition-colors hover:bg-elevated/50"
                   :class="route.query.issue === issue.id && 'bg-elevated/60'"
                 >
                   <div class="min-w-0 space-y-1.5">
@@ -682,7 +682,7 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
                     size="sm"
                     :aria-label="`Preview #${issue.number}`"
                     title="Preview"
-                    class="relative z-10 hidden md:inline-flex justify-self-end text-dimmed hover:text-highlighted"
+                    class="relative z-1 hidden md:inline-flex justify-self-end text-dimmed hover:text-highlighted"
                     @click="preview(issue)"
                   />
                 </article>
