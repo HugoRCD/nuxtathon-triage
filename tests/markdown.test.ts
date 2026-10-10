@@ -3,8 +3,8 @@ import { test } from 'node:test'
 import { parseMarkdown } from 'comark'
 import { cleanMarkdown, markdownOptions, markdownPlugins } from '../shared/markdown.ts'
 
-async function render(text: string) {
-  const doc = await parseMarkdown(cleanMarkdown(text), { ...markdownOptions, plugins: markdownPlugins() })
+async function render(text: string, ctx?: Parameters<typeof markdownPlugins>[0]) {
+  const doc = await parseMarkdown(cleanMarkdown(text), { ...markdownOptions, plugins: markdownPlugins(ctx) })
   return JSON.stringify(doc.nodes)
 }
 
@@ -57,4 +57,27 @@ test('GitHub Markdown features render', async () => {
   assert.ok(out.includes('"language":"ts"'))
   assert.ok(out.includes('["strong",{},"Logs"]'), 'details summary becomes a label')
   assert.ok(out.includes('"href":"https://nuxt.com","target":"_blank","rel":"noopener noreferrer nofollow"'))
+})
+
+test('code blocks are highlighted with GitHub themes, after sanitising', async () => {
+  const out = await render(
+    '```ts\nconst x: number = 1\n```\n\n```notalang\nkept\n```\n\n<pre style="color:red"><span style="x">raw</span></pre>',
+  )
+  assert.ok(out.includes('github-light github-dark'), 'GitHub themes')
+  assert.ok(/"style":"color:#[0-9A-F]{6};--shiki-dark:#[0-9A-F]{6}"/.test(out), 'token colours survive')
+  assert.ok(out.includes('kept'), 'unknown language falls back to plain code')
+  assert.ok(!out.includes('color:red') && !out.includes('"style":"x"'), 'user styles still stripped')
+})
+
+test('GitHub references and thread mentions become links', async () => {
+  const out = await render(
+    'Fixed in #12 and nuxt/ui#3, thanks @danielroe, not @someone or @nuxt/kit.\n\nhttps://github.com/nuxt/nuxt/issues/99#issuecomment-1\n\n`#7 @danielroe`',
+    { repo: 'nuxt/nuxt', people: ['danielroe'] },
+  )
+  assert.ok(out.includes('["a",{"href":"https://github.com/nuxt/nuxt/issues/12"'))
+  assert.ok(out.includes('"nuxt/ui#3"'))
+  assert.ok(out.includes('{"href":"https://github.com/danielroe"'))
+  assert.ok(!out.includes('github.com/someone') && !out.includes('github.com/nuxt/kit'), 'only participants')
+  assert.ok(out.includes('"#99 (comment)"'), 'GitHub URLs read like GitHub')
+  assert.ok(out.includes('["code",{},"#7 @danielroe"]'), 'inline code stays literal')
 })

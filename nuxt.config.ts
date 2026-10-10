@@ -52,7 +52,12 @@ export default defineNuxtConfig({
     ].join(' '),
     browserRedirect: '/',
   },
-  routeRules: { '/': { prerender: true } },
+  routeRules: {
+    '/': { prerender: true },
+    // The snapshot only changes with a deploy, so cache each issue until the next one.
+    '/*/*/issues/**': { isr: true },
+    '/api/issues/**': { isr: true },
+  },
   vite: {
     optimizeDeps: {
       include: [
@@ -60,6 +65,7 @@ export default defineNuxtConfig({
         'comark/plugins/html',
         'comark/plugins/security',
         'comark/plugins/task-list',
+        'comark/plugins/shiki',
         'comark/utils',
       ],
     },

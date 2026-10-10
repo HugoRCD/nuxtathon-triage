@@ -91,6 +91,29 @@ const skills = computed(() =>
   skillKeys.filter((k) => (probability(selected.value?.answers, `skill_${k}`) ?? 0) >= 0.8),
 )
 const maintainer = (a: string) => ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(a)
+
+/** Everyone in the thread, so their `@mentions` link to GitHub and nothing else does. */
+const people = computed(() => [
+  ...new Set([props.issue.author, ...props.issue.comments.map((c) => c.author)]),
+])
+const avatar = (login: string) => `https://github.com/${encodeURIComponent(login)}.png?size=80`
+
+/** Like GitHub: long threads keep the start and the end and fold the middle. */
+const FOLD_AFTER = 8
+const KEEP_START = 2
+const KEEP_END = 4
+const unfolded = ref(false)
+watch(
+  () => props.issue.id,
+  () => (unfolded.value = false),
+)
+const folded = computed(() =>
+  unfolded.value || props.issue.comments.length <= FOLD_AFTER
+    ? 0
+    : props.issue.comments.length - KEEP_START - KEEP_END,
+)
+const head = computed(() => (folded.value ? props.issue.comments.slice(0, KEEP_START) : props.issue.comments))
+const tail = computed(() => (folded.value ? props.issue.comments.slice(-KEEP_END) : []))
 </script>
 
 <template>
@@ -352,47 +375,104 @@ const maintainer = (a: string) => ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(a
     </section>
 
     <section class="space-y-3">
-      <h3 class="text-lg text-highlighted">Original Report</h3>
-      <div class="rounded-lg border border-default">
-        <div class="px-4 py-2.5 border-b border-default text-sm text-muted">
-          <span class="text-highlighted">{{ issue.author }}</span> · {{ date(issue.createdAt) }}
-        </div>
-        <IssueMarkdown :key="issue.id" :value="issue.body" class="px-4 py-3 max-h-[32rem] overflow-y-auto" />
-      </div>
-    </section>
-
-    <section class="space-y-3">
       <h3 class="text-lg text-highlighted">
-        Discussion <span class="text-muted">{{ issue.comments.length }}</span>
+        Thread <span class="text-muted">{{ issue.comments.length + 1 }}</span>
       </h3>
-      <p v-if="!issue.comments.length" class="text-sm text-muted">No comments.</p>
-      <details
-        v-for="comment in issue.comments"
-        :key="comment.url"
-        class="group rounded-lg border border-default open:bg-elevated/20"
+      <ol
+        class="relative space-y-4 before:absolute before:inset-y-2 before:left-4 before:w-px before:bg-(--ui-border)"
       >
-        <summary class="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm list-none">
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="size-4 text-muted transition-transform group-open:rotate-90"
-          />
-          <span class="text-highlighted">{{ comment.author }}</span>
-          <UBadge v-if="maintainer(comment.association)" size="sm" color="primary" variant="soft">{{
-            label('association', comment.association.toLowerCase())
-          }}</UBadge>
-          <span class="ml-auto text-xs text-muted">{{ date(comment.createdAt) }}</span>
-        </summary>
-        <div class="px-4 pb-3 space-y-2">
-          <IssueMarkdown :value="comment.body" empty="Empty comment." />
-          <a
-            :href="comment.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-block text-sm text-primary hover:underline"
-            >View on GitHub ↗</a
-          >
-        </div>
-      </details>
+        <li class="relative flex gap-3">
+          <UAvatar :src="avatar(issue.author)" :alt="issue.author" size="md" class="ring-4 ring-(--ui-bg)" />
+          <article class="min-w-0 flex-1 rounded-lg border border-default bg-default">
+            <header
+              class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 border-b border-default bg-elevated/40 text-sm"
+            >
+              <a
+                :href="`https://github.com/${issue.author}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-medium text-highlighted hover:underline"
+                >{{ issue.author }}</a
+              >
+              <span class="text-muted">opened {{ date(issue.createdAt) }}</span>
+              <UBadge size="sm" color="neutral" variant="outline" class="ml-auto">Author</UBadge>
+            </header>
+            <IssueMarkdown
+              :key="issue.id"
+              :value="issue.body"
+              :repo="issue.repo"
+              :people="people"
+              class="px-4 py-3 max-h-[32rem] overflow-y-auto"
+            />
+          </article>
+        </li>
+
+        <template v-for="(part, index) in [head, tail]" :key="index">
+          <li v-if="index === 1 && folded" class="relative flex justify-center">
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-chevrons-up-down"
+              class="bg-default"
+              @click="unfolded = true"
+              >Show {{ folded }} Hidden Comments</UButton
+            >
+          </li>
+          <li v-for="comment in part" :key="comment.url" class="relative flex gap-3">
+            <UAvatar
+              :src="avatar(comment.author)"
+              :alt="comment.author"
+              size="md"
+              class="ring-4 ring-(--ui-bg)"
+            />
+            <article
+              class="min-w-0 flex-1 rounded-lg border bg-default"
+              :class="maintainer(comment.association) ? 'border-primary/40' : 'border-default'"
+            >
+              <header
+                class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 border-b text-sm"
+                :class="
+                  maintainer(comment.association)
+                    ? 'border-primary/30 bg-primary/5'
+                    : 'border-default bg-elevated/40'
+                "
+              >
+                <a
+                  :href="`https://github.com/${comment.author}`"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-medium text-highlighted hover:underline"
+                  >{{ comment.author }}</a
+                >
+                <a
+                  :href="comment.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-muted hover:underline"
+                  >{{ date(comment.createdAt) }}</a
+                >
+                <span class="ml-auto flex gap-1.5">
+                  <UBadge v-if="comment.author === issue.author" size="sm" color="neutral" variant="outline"
+                    >Author</UBadge
+                  >
+                  <UBadge v-if="maintainer(comment.association)" size="sm" color="primary" variant="soft">{{
+                    label('association', comment.association.toLowerCase())
+                  }}</UBadge>
+                </span>
+              </header>
+              <IssueMarkdown
+                :value="comment.body"
+                :repo="issue.repo"
+                :people="people"
+                empty="Empty comment."
+                class="px-4 py-3"
+              />
+            </article>
+          </li>
+        </template>
+      </ol>
+      <p v-if="!issue.comments.length" class="pl-11 text-sm text-muted">No comments yet.</p>
     </section>
 
     <footer class="text-xs text-muted border-t border-default pt-4">

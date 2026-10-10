@@ -48,6 +48,7 @@ Keep validation proportional. Documentation-only changes do not justify dependen
 - `pnpm test`: deterministic batch and pagination tests; browser test skips by default.
 - `pnpm test:browser`: browser integration test against the running local site.
 - `pnpm typecheck`, `pnpm format:check`, `pnpm build`: validation and Vercel build (`.vercel/output`).
-- Untrusted Markdown goes through `shared/markdown.ts` only; never use `v-html` or widen the tag/protocol allowlists without a test in `tests/markdown.test.ts`.
+- Issue page URLs come from `issuePath()` in `shared/links.ts`; keep them identical to GitHub's paths.
+- Untrusted Markdown goes through `shared/markdown.ts` only; highlighting and GitHub links run after the sanitiser, so keep them last; never use `v-html` or widen the tag/protocol allowlists without a test in `tests/markdown.test.ts`.
 
 A ten-request live Jev pilot succeeded; see PILOT.md. Sustained throughput, account limits and probability calibration remain unverified. Keep the temporary credential confined to ignored .env (owner-only permissions); never print it. Read README budget semantics before further paid runs.

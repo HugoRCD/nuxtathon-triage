@@ -9,6 +9,7 @@ import { age, points } from './labels.ts'
 import { steps, summary, why } from './plain.ts'
 import { cleanMarkdown } from './markdown.ts'
 import { availabilities, describeLive, liveEntry, type LiveStatus } from './live.ts'
+import { SITE, issuePath } from './links.ts'
 
 export const views = ['all', 'quick', 'newcomer', 'closure', 'questions', 'docs'] as const
 export const times = ['underHour', 'fewHours', 'dayOrMore', 'unclear'] as const
@@ -70,6 +71,7 @@ export function row(issue: PublicIssue, live?: LiveStatus | null) {
   return {
     id: issue.id,
     url: issue.url,
+    page: `${SITE}${issuePath(issue)}`,
     title: issue.title,
     repo: issue.repo,
     points: points(issue),

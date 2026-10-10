@@ -32,6 +32,8 @@ VS Code, in `.vscode/mcp.json`:
 
 Then ask: “Find three easy Nuxt issues that count for Nuxtathon.” The server has three tools: `get_overview`, `search_issues` and `get_issue`.
 
+Every issue has a shareable page at the GitHub path, so `github.com/nuxt/nuxt/issues/123` becomes `nuxtathon-triage.vercel.app/nuxt/nuxt/issues/123`.
+
 ## Run locally
 
 ```sh

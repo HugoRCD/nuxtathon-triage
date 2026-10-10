@@ -60,7 +60,11 @@ test(
       )
       await page.getByRole('button', { name: 'Recognize Github discussions activity', exact: true }).click()
       await page.getByRole('dialog').waitFor()
-      assert.match(await page.getByRole('dialog').innerText(), /Original Report/)
+      assert.match(await page.getByRole('dialog').innerText(), /Thread/)
+      assert.equal(
+        await page.getByRole('link', { name: 'Open as a Page' }).getAttribute('href'),
+        '/nuxt/nuxters/issues/9',
+      )
       const snapshot = await (await page.request.get(`${base}/data/index.json`)).json()
       const issue = snapshot.issues.find((i: { id: string }) => i.id === 'nuxt/nuxters#9')
       assert.match(

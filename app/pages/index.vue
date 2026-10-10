@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Dataset, PublicIssue } from '#shared/types'
-import { LIVE_URL, liveEntry, type LiveStatus } from '#shared/live'
+import { liveEntry } from '#shared/live'
+import { issuePath } from '#shared/links'
 import { defaultFilters, filterIssues, type Filters } from '#shared/filters'
 import { points, age } from '#shared/labels'
 import { summary, time, who, steps, types } from '#shared/plain'
@@ -8,21 +9,7 @@ const { project } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
 const { data, status, error, refresh } = await useFetch<Dataset>('/data/index.json', { server: false })
-// Live status from the `status` branch: public, cached ~5 min by GitHub, no token.
-const { data: live, refresh: refreshLive } = useFetch<LiveStatus | null>(LIVE_URL, {
-  server: false,
-  lazy: true,
-  default: () => null,
-  parseResponse: (text) => {
-    const s = JSON.parse(text) as LiveStatus
-    return s && typeof s.issues === 'object' ? s : null
-  },
-})
-let liveTimer: ReturnType<typeof setInterval> | undefined
-onMounted(() => {
-  liveTimer = setInterval(() => refreshLive(), 5 * 60_000)
-})
-onBeforeUnmount(() => clearInterval(liveTimer))
+const { live } = useLive()
 const entry = (i: PublicIssue) => liveEntry(live.value, i.id)
 const filters = reactive<Filters>({ ...defaultFilters })
 function readQuery() {
@@ -695,6 +682,16 @@ const number = (n: number | undefined) => (n === undefined ? '—' : n.toLocaleS
         description: 'text-sm',
       }"
     >
+      <template #actions>
+        <UButton
+          v-if="selected"
+          :to="issuePath(selected)"
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-maximize-2"
+          aria-label="Open as a Page"
+        />
+      </template>
       <template #body><IssueDetail v-if="selected" :issue="selected" :live="entry(selected)" /></template>
     </USlideover>
   </div>

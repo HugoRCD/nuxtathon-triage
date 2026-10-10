@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { cleanMarkdown, markdownOptions, markdownPlugins } from '#shared/markdown'
 
-const props = defineProps<{ value: string | null | undefined; empty?: string }>()
+const props = defineProps<{
+  value: string | null | undefined
+  empty?: string
+  /** `owner/repo`, so `#123` links to the right repository. */
+  repo?: string
+  /** Thread participants; only these `@mentions` become links. */
+  people?: string[]
+}>()
 const text = computed(() => cleanMarkdown(props.value))
-const plugins = markdownPlugins()
+const plugins = markdownPlugins({ repo: props.repo, people: props.people })
 </script>
 
 <template>
