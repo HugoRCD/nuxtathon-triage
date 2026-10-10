@@ -1,0 +1,13 @@
+{
+  "issue": "owner/repository#123",
+  "notes": "Replace this with an actual investigation. Example only; no code or tests have been checked.",
+  "sources": [
+    {
+      "url": "https://github.com/owner/repository/blob/COMMIT/path/to/file.ts",
+      "retrievedAt": "2026-10-10T00:00:00Z",
+      "ref": "Replace with the inspected commit SHA",
+      "excerpt": "Paste a relevant source excerpt, not a speculative explanation.",
+      "verification": "source-read"
+    }
+  ]
+}

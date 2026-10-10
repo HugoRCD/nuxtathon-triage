@@ -1,0 +1,114 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/outfit';
+
+@theme static {
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Outfit Variable', 'Outfit', var(--font-sans);
+  --color-green-50: #effdf5;
+  --color-green-100: #d9fbe8;
+  --color-green-200: #b3f5d1;
+  --color-green-300: #75edae;
+  --color-green-400: #00dc82;
+  --color-green-500: #00c16a;
+  --color-green-600: #00a155;
+  --color-green-700: #007f45;
+  --color-green-800: #016538;
+  --color-green-900: #0a5331;
+  --color-green-950: #052e16;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-medium) !important;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+:root {
+  --ui-container: 90rem;
+}
+/* Green text needs AA contrast on white; dark mode keeps the brand #00DC82. */
+.light {
+  --ui-primary: var(--ui-color-primary-700);
+}
+.dark {
+  --ui-bg: var(--ui-color-neutral-950);
+  --ui-bg-muted: var(--ui-color-neutral-900);
+  --ui-bg-elevated: var(--ui-color-neutral-900);
+  --ui-bg-accented: var(--ui-color-neutral-800);
+}
+
+.evidence-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.issue-row:focus-within {
+  background: var(--ui-bg-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Issue Markdown: compact prose that fits the detail panel. */
+.issue-markdown {
+  overflow-wrap: anywhere;
+}
+.issue-markdown :is(p, ul, ol, blockquote, table, pre, hr, h4, h5, details) {
+  margin-block: 0.625rem;
+}
+.issue-markdown p,
+.issue-markdown li {
+  font-size: inherit;
+  line-height: 1.5rem;
+}
+.issue-markdown :is(h4, h5) {
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+}
+.issue-markdown :is(p, ul, ol, blockquote, table, pre, hr, h4, h5, div):first-child {
+  margin-top: 0;
+}
+.issue-markdown :is(p, ul, ol, blockquote, table, pre, hr, h4, h5, div):last-child {
+  margin-bottom: 0;
+}
+.issue-markdown pre {
+  font-size: 0.8125rem;
+  white-space: pre;
+  max-height: 24rem;
+}
+.issue-markdown img {
+  max-width: 100%;
+  height: auto;
+}
+.issue-markdown .contains-task-list {
+  list-style: none;
+  padding-left: 0.25rem;
+}
+.issue-markdown .task-list-item-checkbox {
+  margin-right: 0.375rem;
+  vertical-align: middle;
+}
+
+.issue-markdown :is(th, td) {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.issue-markdown :is(th, td):first-child {
+  min-width: 9rem;
+}

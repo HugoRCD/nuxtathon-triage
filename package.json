@@ -1,0 +1,48 @@
+{
+  "name": "nuxtathon-triage",
+  "private": true,
+  "license": "MIT",
+  "repository": "github:HugoRCD/nuxtathon-triage",
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck && tsc -p tsconfig.scripts.json",
+    "test": "tsx --test tests/*.test.ts",
+    "triage": "tsx --env-file-if-exists=.env scripts/cli.ts",
+    "test:browser": "TRIAGE_BROWSER_TEST=1 tsx --test tests/browser.test.ts",
+    "format": "prettier --write app server shared scripts tests *.ts *.json *.md",
+    "format:check": "prettier --check app server shared scripts tests *.ts *.json *.md"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "4.0.110",
+    "@comark/nuxt": "0.7.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/outfit": "5.3.0",
+    "@iconify-json/lucide": "1.2.142",
+    "@nuxt/ui": "4.11.3",
+    "@nuxtjs/mcp-toolkit": "0.24.1",
+    "ai": "7.0.137",
+    "comark": "0.7.0",
+    "nuxt": "4.6.1",
+    "tailwindcss": "4.3.3",
+    "vue": "3.5.43",
+    "vue-router": "5.4.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "^24",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.12"
+  }
+}

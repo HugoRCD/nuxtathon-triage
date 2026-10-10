@@ -1,0 +1,11 @@
+[
+  {
+    "issue": "owner/repository#123",
+    "answers": {
+      "workType": "docs",
+      "nextAction": "implement",
+      "newcomer": "suitable",
+      "hasReproduction": false
+    }
+  }
+]
