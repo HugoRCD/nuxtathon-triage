@@ -12,3 +12,5 @@ minimumReleaseAgeExclude:
   - '@nuxt/vite-server@4.6.1'
   - 'ai@7.0.137'
   - 'nuxt@4.6.1'
+  - '@comark/vue@0.9.1'
+  - comark@0.9.1

@@ -8,6 +8,13 @@ async function render(text: string, ctx?: Parameters<typeof markdownPlugins>[0])
   return JSON.stringify(doc.nodes)
 }
 
+test('component syntax cannot bind props in GitHub Markdown', async () => {
+  const out = await render('::button{:as=\'{"name":"example"}\'}\nhello\n::')
+  assert.ok(!out.includes('["button",'), 'component syntax stays disabled')
+  assert.ok(!out.includes('"as":'), 'bound component props are not created')
+  assert.ok(out.includes('hello'), 'content remains visible')
+})
+
 test('hostile HTML is dropped or neutralised', async () => {
   const out = await render(
     [
