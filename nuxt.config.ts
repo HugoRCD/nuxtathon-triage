@@ -6,7 +6,7 @@ const DESCRIPTION =
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-10',
-  modules: ['@nuxt/ui', '@comark/nuxt', '@nuxtjs/mcp-toolkit'],
+  modules: ['@nuxt/ui', '@comark/vue', '@nuxtjs/mcp-toolkit'],
   css: ['~/assets/css/main.css'],
   ui: { fonts: false },
   colorMode: { preference: 'light', fallback: 'light' },
